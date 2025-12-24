@@ -1,7 +1,45 @@
-.num-btn { height: 42px; border-radius: 10px; font-weight: 800; font-size: 14px; background-color: #1f2937; transition: all 0.2s; border: 1px solid #374151; }
-.num-disabled { background-color: #ef4444 !important; opacity: 0.2; text-decoration: line-through; border: none; }
-.num-hot { background-color: #f59e0b !important; color: black; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); border: none; }
-.num-cold { background-color: #3b82f6 !important; border: none; }
-.ring-pinned { outline: 4px solid white; outline-offset: -4px; z-index: 10; background-color: #4b5563 !important; }
-.animate-pop { animation: pop 0.3s ease-out; }
-@keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+/* Nút số cơ bản */
+.num-btn { 
+    height: 48px; 
+    position: relative;
+    border-radius: 10px; 
+    font-weight: 800; 
+    font-size: 14px; 
+    background-color: #1f2937; 
+    border: 1px solid #374151; 
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Icon ghim nhỏ nằm góc trên */
+.pin-icon {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 8px;
+    opacity: 0.3;
+}
+
+/* Trạng thái khi đã Ghim */
+.is-pinned {
+    border: 2px solid white !important;
+    background-color: #374151 !important;
+}
+.is-pinned .pin-icon {
+    opacity: 1;
+    color: #f59e0b;
+}
+
+/* Trạng thái Tắt số */
+.num-disabled { 
+    background-color: #ef4444 !important; 
+    opacity: 0.2; 
+    text-decoration: line-through; 
+    border: none; 
+}
+
+/* Màu sắc Hot/Cold */
+.num-hot { color: #f59e0b; }
+.num-cold { color: #3b82f6; }
