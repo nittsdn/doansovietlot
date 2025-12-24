@@ -108,6 +108,119 @@
                 map.appendChild(btn);
             }
         }
+        // Thêm biến để quản lý các số được Ghim
+let pinnedNumbers = new Set();
+let allGeneratedTickets = [];
+
+// Cập nhật hàm initMap để có thêm tính năng PIN (Chuột phải hoặc giữ lâu để Pin)
+function initMap() {
+    const map = document.getElementById('numberMap');
+    map.innerHTML = ''; 
+    for (let i = 1; i <= 55; i++) {
+        const btn = document.createElement('button');
+        btn.innerText = i.toString().padStart(2, '0');
+        btn.className = 'num-btn h-10 rounded-lg text-sm font-bold relative';
+        
+        // Màu sắc theo sức nóng
+        if (numberStats[i] > 25) btn.classList.add('num-hot'); 
+        else if (numberStats[i] < 15) btn.classList.add('num-cold');
+        else btn.classList.add('num-active');
+
+        // Click chuột trái: Bật/Tắt số (Deselect)
+        btn.onclick = () => {
+            if (disabledNumbers.has(i)) {
+                disabledNumbers.delete(i);
+                btn.classList.remove('num-disabled');
+            } else {
+                disabledNumbers.add(i);
+                pinnedNumbers.delete(i); // Nếu tắt thì bỏ ghim luôn
+                btn.classList.remove('ring-2', 'ring-white');
+                btn.classList.add('num-disabled');
+            }
+        };
+
+        // Click chuột phải (hoặc giữ): Ghim số (PIN)
+        btn.oncontextmenu = (e) => {
+            e.preventDefault();
+            if (disabledNumbers.has(i)) return;
+            if (pinnedNumbers.has(i)) {
+                pinnedNumbers.delete(i);
+                btn.classList.remove('ring-4', 'ring-white', 'z-10');
+            } else {
+                if (pinnedNumbers.size < 6) {
+                    pinnedNumbers.add(i);
+                    btn.classList.add('ring-4', 'ring-white', 'z-10');
+                }
+            }
+        };
+        map.appendChild(btn);
+    }
+}
+
+// Hàm Copy tất cả số
+function copyAll() {
+    const text = allGeneratedTickets.map(t => t.join(' ')).join('\n');
+    navigator.clipboard.writeText(text);
+    alert('Đã copy 5 bộ số!');
+}
+
+function generateFinalTickets() {
+    const ticketList = document.getElementById('ticketList');
+    ticketList.innerHTML = '';
+    allGeneratedTickets = [];
+    document.getElementById('results').classList.remove('hidden');
+
+    let usedNumbersInSession = new Set(); // Để tính toán Độ phủ (Full Spectrum)
+
+    while (allGeneratedTickets.length < 5) {
+        let s = Array.from(pinnedNumbers); // Bắt đầu bằng các số đã Ghim
+        
+        while (s.length < 6) {
+            let r = Math.floor(Math.random() * 55) + 1;
+            if (!s.includes(r) && !disabledNumbers.has(r)) {
+                // Logic Độ Phủ: Ưu tiên những số chưa xuất hiện trong các bộ trước của phiên này
+                if (allGeneratedTickets.length >= 3 && !usedNumbersInSession.has(r)) {
+                    s.push(r);
+                } else if (allGeneratedTickets.length < 3) {
+                    s.push(r);
+                } else {
+                    // Nếu quá khó để tìm số mới, vẫn cho phép lấy số cũ sau một số lần thử
+                    if (Math.random() > 0.7) s.push(r);
+                }
+            }
+        }
+        s.sort((a, b) => a - b);
+
+        // PHỄU LỌC 3 CẤP
+        let chan = s.filter(n => n % 2 === 0).length;
+        let tong = s.reduce((a, b) => a + b, 0);
+        let s_str = s.map(n => n.toString().padStart(2, '0')).join(' ');
+
+        // Kiểm tra Vùng Đỏ & Lịch sử
+        if (chan === 0 || chan === 6) continue;
+        if (tong < 100 || tong > 210) continue;
+        if (historyData.some(h => h['6 số trúng'] === s_str)) continue;
+
+        allGeneratedTickets.push(s);
+        s.forEach(n => usedNumbersInSession.add(n)); // Ghi nhận số đã dùng để tính độ phủ cho bộ sau
+
+        // Hiển thị kết quả
+        const item = document.createElement('div');
+        item.className = 'bg-gray-700 p-3 rounded-xl flex justify-between items-center border-l-4 border-green-500 animate-fade-in';
+        item.innerHTML = `
+            <div class="font-mono text-lg font-bold">${s_str}</div>
+            <div class="text-[10px] text-gray-400 text-right">TỔNG: ${tong}<br>${chan}C-${6-chan}L</div>
+        `;
+        ticketList.appendChild(item);
+    }
+    
+    // Thêm nút Copy nhanh
+    const copyBtn = document.createElement('button');
+    copyBtn.className = "w-full mt-4 text-xs text-gray-500 underline";
+    copyBtn.innerText = "Copy tất cả bộ số";
+    copyBtn.onclick = copyAll;
+    ticketList.appendChild(copyBtn);
+}
 
         function generateFinalTickets() {
             const ticketList = document.getElementById('ticketList');
