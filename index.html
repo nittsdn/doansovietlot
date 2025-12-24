@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vietlott Pro V3 - Smart Engine</title>
+    <title>Vietlott Pro V3 - Smart System</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
@@ -11,15 +11,18 @@
 <body class="bg-gray-900 text-white font-sans p-4">
     <div class="max-w-md mx-auto">
         <header class="text-center mb-4">
-            <h1 class="text-2xl font-black text-blue-500">VIETLOTT PRO V3</h1>
-            <div id="status" class="text-[10px] text-yellow-500 mt-1 uppercase tracking-widest">⏳ Đang khởi tạo...</div>
+            <h1 class="text-2xl font-black text-blue-500 tracking-tighter">VIETLOTT PRO V3</h1>
+            <div id="status" class="text-[10px] text-yellow-500 mt-1 uppercase tracking-widest italic">⏳ Đang khởi tạo hệ thống...</div>
         </header>
 
-        <div class="flex justify-between items-center mb-4">
-            <button onclick="fetchOnlineResults()" class="text-[10px] bg-gray-800 border border-gray-700 px-3 py-1 rounded-full hover:bg-gray-700 transition">
-                🔄 Cập nhật số từ Web
+        <div class="flex justify-between items-center mb-4 gap-2">
+            <button onclick="updateManual()" class="flex-1 text-[10px] bg-blue-900 border border-blue-700 px-3 py-2 rounded-lg font-bold hover:bg-blue-800 active:scale-95 transition">
+                ✍️ NHẬP TAY
             </button>
-            <div id="statInfo" class="text-[10px] text-gray-500 italic font-mono">Đã nạp 0 kỳ</div>
+            <button onclick="fetchOnlineResults()" class="flex-1 text-[10px] bg-gray-800 border border-gray-700 px-3 py-2 rounded-lg hover:bg-gray-700 active:scale-95 transition">
+                🔄 QUÉT WEB
+            </button>
+            <div id="statInfo" class="text-[9px] text-gray-500 italic font-mono min-w-[50px] text-right">0 kỳ</div>
         </div>
 
         <div class="grid grid-cols-7 gap-1.5 mb-6" id="numberMap"></div>
@@ -31,15 +34,16 @@
 
             <div id="results" class="hidden">
                 <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-tighter">5 Bộ số gợi ý (Vùng Xanh)</h2>
-                    <button onclick="copyAll()" class="text-[10px] text-blue-400 underline">Copy tất cả</button>
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-tighter">5 Bộ số Gợi ý (Vùng Xanh)</h2>
+                    <button onclick="copyAll()" class="text-[10px] text-blue-400 underline">Copy Tất Cả</button>
                 </div>
                 <div id="ticketList" class="space-y-2"></div>
             </div>
         </div>
 
-        <footer class="mt-6 text-[10px] text-gray-600 text-center">
-            Mẹo: Click để Tắt số | Chuột phải (giữ lâu) để Ghim 📌
+        <footer class="mt-6 text-[9px] text-gray-600 text-center leading-relaxed">
+            Mẹo: Chạm để Tắt số | Giữ lâu để Ghim 📌<br>
+            Hệ thống ưu tiên nạp dữ liệu từ <strong>data.csv</strong> để tối ưu tốc độ.
         </footer>
     </div>
 
