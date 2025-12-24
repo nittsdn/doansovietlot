@@ -3,19 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vietlott V3 - Modular</title>
+    <title>Vietlott Pro V3 - Smart Engine</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
-<body class="bg-gray-900 text-white p-4">
+<body class="bg-gray-900 text-white font-sans p-4">
     <div class="max-w-md mx-auto">
-        <div id="status" class="text-center text-xs text-yellow-500 mb-4">⏳ Đang tải...</div>
-        <div class="grid grid-cols-7 gap-2 mb-6" id="numberMap"></div>
-        <button onclick="generateFinalTickets()" class="w-full bg-blue-600 py-4 rounded-xl font-bold text-xl">🎯 SINH SỐ</button>
-        <div id="results" class="mt-6 hidden">
-            <div id="ticketList" class="space-y-2"></div>
+        <header class="text-center mb-4">
+            <h1 class="text-2xl font-black text-blue-500">VIETLOTT PRO V3</h1>
+            <div id="status" class="text-[10px] text-yellow-500 mt-1 uppercase tracking-widest">⏳ Đang khởi tạo...</div>
+        </header>
+
+        <div class="flex justify-between items-center mb-4">
+            <button onclick="fetchOnlineResults()" class="text-[10px] bg-gray-800 border border-gray-700 px-3 py-1 rounded-full hover:bg-gray-700 transition">
+                🔄 Cập nhật số từ Web
+            </button>
+            <div id="statInfo" class="text-[10px] text-gray-500 italic font-mono">Đã nạp 0 kỳ</div>
         </div>
+
+        <div class="grid grid-cols-7 gap-1.5 mb-6" id="numberMap"></div>
+
+        <div class="bg-gray-800 p-4 rounded-2xl shadow-2xl border border-gray-700">
+            <button onclick="generateFinalTickets()" class="w-full bg-gradient-to-r from-blue-600 to-blue-800 py-4 rounded-xl font-black text-xl shadow-lg active:scale-95 transition mb-4">
+                🎯 SINH SỐ CHIẾN THUẬT
+            </button>
+
+            <div id="results" class="hidden">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-tighter">5 Bộ số gợi ý (Vùng Xanh)</h2>
+                    <button onclick="copyAll()" class="text-[10px] text-blue-400 underline">Copy tất cả</button>
+                </div>
+                <div id="ticketList" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <footer class="mt-6 text-[10px] text-gray-600 text-center">
+            Mẹo: Click để Tắt số | Chuột phải (giữ lâu) để Ghim 📌
+        </footer>
     </div>
 
     <script src="data_handler.js"></script>
