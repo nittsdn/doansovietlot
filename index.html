@@ -3,78 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vietlott Pro V3 - Smart Map</title>
+    <title>Vietlott Pro V3 - Full Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        .num-btn { transition: all 0.2s; }
-        .num-active { background-color: #3b82f6 !important; color: white; }
-        .num-disabled { background-color: #ef4444 !important; color: white; opacity: 0.5; }
-        .num-hot { border: 2px solid #f59e0b; }
+        .num-btn { transition: all 0.2s; border: 1px solid #374151; }
+        .num-active { background-color: #1f2937; }
+        .num-disabled { background-color: #ef4444 !important; opacity: 0.3; text-decoration: line-through; }
+        .num-hot { background-color: #f59e0b !important; color: black; box-shadow: 0 0 10px #f59e0b; }
+        .num-cold { background-color: #3b82f6 !important; }
+        .num-recent { border: 2px solid #10b981; }
     </style>
 </head>
 <body class="bg-gray-900 text-white font-sans p-4">
     <div class="max-w-md mx-auto">
-        <h1 class="text-2xl font-bold text-center mb-6 text-blue-400">VIETLOTT PRO V3</h1>
-        
-        <div class="grid grid-cols-7 gap-2 mb-8" id="numberMap">
-            </div>
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-black text-blue-500 tracking-tighter">VIETLOTT V3</h1>
+            <p class="text-xs text-gray-400 uppercase">Hệ thống phễu lọc 3 cấp chuyên sâu</p>
+        </header>
 
-        <div class="flex flex-col gap-4">
-            <button onclick="generateTickets()" class="bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-bold text-lg shadow-lg">
-                🚀 SINH 5 BỘ SỐ MAY MẮN
+        <div id="status" class="bg-gray-800 p-2 rounded-lg mb-4 text-center text-xs text-yellow-500">
+            ⏳ Đang tải dữ liệu lịch sử...
+        </div>
+        
+        <div class="grid grid-cols-7 gap-2 mb-6" id="numberMap"></div>
+
+        <div class="bg-gray-800 p-4 rounded-2xl shadow-2xl border border-gray-700">
+            <div class="flex justify-between mb-4">
+                <span class="text-sm font-bold">Smart Filter: <span class="text-blue-400">ON</span></span>
+                <span id="statInfo" class="text-xs text-gray-400">Đã nạp 0 kỳ</span>
+            </div>
+            
+            <button onclick="generateFinalTickets()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 py-4 rounded-xl font-black text-xl mb-4 transform active:scale-95 transition">
+                🎯 SINH SỐ CHIẾN THUẬT
             </button>
-            <div id="results" class="bg-gray-800 p-4 rounded-xl hidden">
-                <h2 class="text-sm text-gray-400 mb-2 uppercase tracking-widest">Kết quả (Đã lọc Vùng Đỏ)</h2>
-                <div id="ticketList" class="space-y-3"></div>
+
+            <div id="results" class="hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-sm font-bold text-gray-400 uppercase">5 Bộ số Gợi ý (Vùng Xanh)</h2>
+                    <button onclick="location.reload()" class="text-xs text-blue-400">Làm mới Map</button>
+                </div>
+                <div id="ticketList" class="space-y-2"></div>
             </div>
         </div>
     </div>
 
     <script>
+        let historyData = [];
+        let numberStats = {}; // Tần suất xuất hiện
         let disabledNumbers = new Set();
+        const FILE_NAME = 'p655v3.xlsx - Sheet1.csv';
 
-        // Khởi tạo Map 55 số
-        const map = document.getElementById('numberMap');
-        for (let i = 1; i <= 55; i++) {
-            const btn = document.createElement('button');
-            btn.innerText = i.toString().padStart(2, '0');
-            btn.className = 'num-btn bg-gray-700 p-2 rounded-md text-sm font-bold hover:bg-gray-600';
-            btn.onclick = () => {
-                if (disabledNumbers.has(i)) {
-                    disabledNumbers.delete(i);
-                    btn.classList.remove('num-disabled');
-                } else {
-                    disabledNumbers.add(i);
-                    btn.classList.add('num-disabled');
+        // 1. TẢI VÀ PHÂN TÍCH DỮ LIỆU CSV
+        Papa.parse(FILE_NAME, {
+            download: true,
+            header: true,
+            complete: function(results) {
+                historyData = results.data;
+                processStats();
+                initMap();
+                document.getElementById('status').innerText = "✅ Dữ liệu V3 đã sẵn sàng";
+                document.getElementById('statInfo').innerText = `Đã nạp ${historyData.length} kỳ`;
+            },
+            error: function() {
+                document.getElementById('status').innerText = "⚠️ Không tìm thấy file p655v3.csv";
+                initMap();
+            }
+        });
+
+        function processStats() {
+            // Lấy 200 kỳ gần nhất để tính Hot/Cold (Logic Cửa sổ trượt)
+            const recent = historyData.slice(-200);
+            recent.forEach(row => {
+                if (row['6 số trúng']) {
+                    row['6 số trúng'].split(' ').forEach(n => {
+                        let num = parseInt(n);
+                        numberStats[num] = (numberStats[num] || 0) + 1;
+                    });
                 }
-            };
-            map.appendChild(btn);
+            });
         }
 
-        function generateTickets() {
-            const resultsDiv = document.getElementById('results');
+        function initMap() {
+            const map = document.getElementById('numberMap');
+            for (let i = 1; i <= 55; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i.toString().padStart(2, '0');
+                btn.className = 'num-btn h-10 rounded-lg text-sm font-bold';
+                
+                // Hiển thị nhãn màu (Cấp 3)
+                if (numberStats[i] > 25) btn.classList.add('num-hot'); // Số Hot
+                else if (numberStats[i] < 15) btn.classList.add('num-cold'); // Số Gan
+                else btn.classList.add('num-active');
+
+                btn.onclick = () => {
+                    if (disabledNumbers.has(i)) {
+                        disabledNumbers.delete(i);
+                        btn.classList.remove('num-disabled');
+                    } else {
+                        disabledNumbers.add(i);
+                        btn.classList.add('num-disabled');
+                    }
+                };
+                map.appendChild(btn);
+            }
+        }
+
+        function generateFinalTickets() {
             const ticketList = document.getElementById('ticketList');
             ticketList.innerHTML = '';
-            resultsDiv.classList.remove('hidden');
+            document.getElementById('results').classList.remove('hidden');
 
             let count = 0;
             while (count < 5) {
-                let nums = [];
-                while (nums.length < 6) {
+                let s = [];
+                while (s.length < 6) {
                     let r = Math.floor(Math.random() * 55) + 1;
-                    if (!nums.includes(r) && !disabledNumbers.has(r)) nums.push(r);
+                    if (!s.includes(r) && !disabledNumbers.has(r)) s.push(r);
                 }
-                nums.sort((a, b) => a - b);
+                s.sort((a, b) => a - b);
 
-                // PHỄU LỌC CẤP 1: VÙNG ĐỎ
-                let chan = nums.filter(n => n % 2 === 0).length;
-                if (chan === 0 || chan === 6) continue; // Loại toàn chẵn/lẻ
+                // PHỄU LỌC 3 CẤP
+                // 1. Vùng Đỏ: Chẵn/Lẻ
+                let chan = s.filter(n => n % 2 === 0).length;
+                if (chan === 0 || chan === 6) continue;
+
+                // 2. Vùng Đỏ: Tổng 100-200
+                let tong = s.reduce((a, b) => a + b, 0);
+                if (tong < 100 || tong > 210) continue;
+
+                // 3. Đối soát Jackpot lịch sử
+                let s_str = s.map(n => n.toString().padStart(2, '0')).join(' ');
+                let isExist = historyData.some(h => h['6 số trúng'] === s_str);
+                if (isExist) continue;
 
                 count++;
                 const item = document.createElement('div');
-                item.className = 'bg-gray-700 p-3 rounded-lg flex justify-between items-center border-l-4 border-blue-500';
-                item.innerHTML = `<span>${nums.map(n => n.toString().padStart(2, '0')).join('  ')}</span>
-                                 <span class="text-xs text-blue-300">${chan}C-${6-chan}L</span>`;
+                item.className = 'bg-gray-700 p-3 rounded-xl flex justify-between items-center border-l-4 border-yellow-500';
+                item.innerHTML = `
+                    <div class="font-mono text-lg font-bold">${s_str.replace(/ /g, ' &nbsp;')}</div>
+                    <div class="text-[10px] text-gray-400 text-right">Sum: ${tong}<br>${chan}C-${6-chan}L</div>
+                `;
                 ticketList.appendChild(item);
             }
         }
