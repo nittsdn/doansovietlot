@@ -1,185 +1,83 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Power 6/55 Pro</title>
-  <style>
-    :root{--bg:#eef2f4;--card:#fff;--text:#1c1c1e;--sub:#6e6e73;--accent:#e7b8c6;--shadow:0 10px 20px rgba(0,0,0,.08);--h1:#ffc9d3;--h2:#ffb6c1;--h3:#ff8c94}
-    body{margin:0;font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text)}
-    .container{max-width:420px;margin:auto;padding:20px}
-    h1{text-align:center;font-weight:600;margin-bottom:30px}
-    button{width:100%;padding:16px;border:none;border-radius:16px;background:#dde3e8;font-size:17px;margin-top:16px;transition:.2s}
-    button:active{background:var(--accent);transform:scale(.98)}
-    button.ghost{background:none;color:var(--sub);font-size:14px;margin-top:8px}
-    .list{margin-top:20px}
-    .item{display:flex;justify-content:space-between;align-items:center;background:var(--card);padding:16px;border-radius:16px;box-shadow:var(--shadow);margin-bottom:12px}
-    .numbers{font-size:20px;font-weight:bold;letter-spacing:1px}
-    .power{color:var(--accent);font-size:16px;margin-top:4px}
-    .delete{color:red;font-size:24px;font-weight:bold}
-    .note{font-size:13px;color:var(--sub);text-align:center;margin:30px 0}
-    .heatmap{margin-top:20px;padding:10px;background:#f8f9fa;border-radius:12px;overflow-x:auto}
-    .heatmap-grid{display:grid;grid-template-columns:repeat(11,1fr);gap:5px}
-    .heat-cell{min-width:24px;height:24px;background:#e0e0e0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px}
-    .heat1{background:var(--h1)}
-    .heat2{background:var(--h2)}
-    .heat3{background:var(--h3)}
-    .popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:99}
-    .popup-content{background:var(--card);border-radius:20px;padding:20px;width:90%;max-height:90vh;overflow:auto}
-    .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:10px}
-    .cell{width:100%;aspect-ratio:1;background:#e5e8ea;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;cursor:pointer}
-    .selected{background:var(--accent);color:white}
-    @media (prefers-color-scheme:dark){:root{--bg:#14181b;--card:#1d2226;--text:#e7ecef;--sub:#9aa6ac;--accent:#e0a9bb}}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vietlott Pro V3 - Smart Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .num-btn { transition: all 0.2s; }
+        .num-active { background-color: #3b82f6 !important; color: white; }
+        .num-disabled { background-color: #ef4444 !important; color: white; opacity: 0.5; }
+        .num-hot { border: 2px solid #f59e0b; }
+    </style>
 </head>
-<body>
-  <div class="container">
-    <h1>Power 6/55 Pro</h1>
-    <button id="generate">SINH 3 BỘ SỐ</button>
-    <button id="manual">CHỌN TỰ DO</button>
-    <button id="copyAll" class="ghost" style="display:none">COPY TẤT CẢ</button>
-    <div id="list" class="list"></div>
-    <div class="note">Chọn số – thêm bộ – xem tần suất bên dưới</div>
-    <div class="heatmap">
-      <div class="heatmap-grid" id="heatmap"></div>
-    </div>
-  </div>
-
-  <div class="popup" id="popup">
-    <div class="popup-content">
-      <h2 style="text-align:center">Chọn 7 số (6 chính + Power)</h2>
-      <div class="grid" id="grid"></div>
-      <button id="addBtn" style="margin-top:20px" disabled>THÊM BỘ NÀY</button>
-      <button class="ghost" id="closePopup">Đóng</button>
-    </div>
-  </div>
-
-  <script>
-    const allNumbers = Array.from({length:55},(_,i)=>i+1);
-    let sets = JSON.parse(localStorage.getItem('powerSets') || '[]');
-    let currentSelection = [];
-
-    function pad(n){return n.toString().padStart(2,'0')}
-
-    function generateRandomSet(){
-      let nums = new Set();
-      while(nums.size<6) nums.add(Math.floor(Math.random()*55)+1);
-      let main = [...nums].sort((a,b)=>a-b);
-      let power;
-      do { power = Math.floor(Math.random()*55)+1; } while(main.includes(power));
-      return {main, power};
-    }
-
-    function renderSets(){
-      const list = document.getElementById('list');
-      list.innerHTML = '';
-      if(sets.length===0){
-        list.innerHTML = '<div class="note">Chưa có bộ số nào</div>';
-      }else{
-        sets.forEach((set,i)=>{
-          const div = document.createElement('div');
-          div.className = 'item';
-          div.innerHTML = `
-            <div>
-              <div class="numbers">${set.main.map(pad).join(' ')}</div>
-              <div class="power">Power ${pad(set.power)}</div>
+<body class="bg-gray-900 text-white font-sans p-4">
+    <div class="max-w-md mx-auto">
+        <h1 class="text-2xl font-bold text-center mb-6 text-blue-400">VIETLOTT PRO V3</h1>
+        
+        <div class="grid grid-cols-7 gap-2 mb-8" id="numberMap">
             </div>
-            <button class="delete" data-index="${i}">×</button>
-          `;
-          list.appendChild(div);
-        });
-        document.getElementById('copyAll').style.display = 'block';
-      }
-      updateHeatmap();
-    }
 
-    function updateHeatmap(){
-      const heatmap = document.getElementById('heatmap');
-      heatmap.innerHTML = '';
-      const freq = {};
-      sets.forEach(set=>{
-        set.main.forEach(n=>freq[n] = (freq[n]||0)+1);
-        freq[set.power] = (freq[set.power]||0)+1;
-      });
-      allNumbers.forEach(n=>{
-        const cell = document.createElement('div');
-        cell.className = 'heat-cell';
-        cell.textContent = pad(n);
-        const count = freq[n]||0;
-        if(count===1) cell.classList.add('heat1');
-        else if(count===2) cell.classList.add('heat2');
-        else if(count>=3) cell.classList.add('heat3');
-        heatmap.appendChild(cell);
-      });
-    }
+        <div class="flex flex-col gap-4">
+            <button onclick="generateTickets()" class="bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-bold text-lg shadow-lg">
+                🚀 SINH 5 BỘ SỐ MAY MẮN
+            </button>
+            <div id="results" class="bg-gray-800 p-4 rounded-xl hidden">
+                <h2 class="text-sm text-gray-400 mb-2 uppercase tracking-widest">Kết quả (Đã lọc Vùng Đỏ)</h2>
+                <div id="ticketList" class="space-y-3"></div>
+            </div>
+        </div>
+    </div>
 
-    document.getElementById('generate').onclick = () => {
-      for(let i=0;i<3;i++){
-        const {main, power} = generateRandomSet();
-        sets.push({main, power});
-      }
-      localStorage.setItem('powerSets', JSON.stringify(sets));
-      renderSets();
-    };
+    <script>
+        let disabledNumbers = new Set();
 
-    // Manual selection
-    const popup = document.getElementById('popup');
-    const grid = document.getElementById('grid');
-    const addBtn = document.getElementById('addBtn');
-    const closePopup = document.getElementById('closePopup');
+        // Khởi tạo Map 55 số
+        const map = document.getElementById('numberMap');
+        for (let i = 1; i <= 55; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = i.toString().padStart(2, '0');
+            btn.className = 'num-btn bg-gray-700 p-2 rounded-md text-sm font-bold hover:bg-gray-600';
+            btn.onclick = () => {
+                if (disabledNumbers.has(i)) {
+                    disabledNumbers.delete(i);
+                    btn.classList.remove('num-disabled');
+                } else {
+                    disabledNumbers.add(i);
+                    btn.classList.add('num-disabled');
+                }
+            };
+            map.appendChild(btn);
+        }
 
-    document.getElementById('manual').onclick = () => {
-      currentSelection = [];
-      grid.innerHTML = '';
-      allNumbers.forEach(n=>{
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.textContent = pad(n);
-        cell.onclick = () => {
-          cell.classList.toggle('selected');
-          const num = parseInt(cell.textContent);
-          if(cell.classList.contains('selected')){
-            currentSelection.push(num);
-          }else{
-            currentSelection = currentSelection.filter(x=>x!==num);
-          }
-          addBtn.disabled = currentSelection.length !==7;
-        };
-        grid.appendChild(cell);
-      });
-      popup.style.display = 'flex';
-    };
+        function generateTickets() {
+            const resultsDiv = document.getElementById('results');
+            const ticketList = document.getElementById('ticketList');
+            ticketList.innerHTML = '';
+            resultsDiv.classList.remove('hidden');
 
-    closePopup.onclick = () => popup.style.display = 'none';
+            let count = 0;
+            while (count < 5) {
+                let nums = [];
+                while (nums.length < 6) {
+                    let r = Math.floor(Math.random() * 55) + 1;
+                    if (!nums.includes(r) && !disabledNumbers.has(r)) nums.push(r);
+                }
+                nums.sort((a, b) => a - b);
 
-    addBtn.onclick = () => {
-      if(currentSelection.length===7){
-        currentSelection.sort((a,b)=>a-b);
-        const main = currentSelection.slice(0,6);
-        const power = currentSelection[6];
-        sets.push({main, power});
-        localStorage.setItem('powerSets', JSON.stringify(sets));
-        renderSets();
-        popup.style.display = 'none';
-      }
-    };
+                // PHỄU LỌC CẤP 1: VÙNG ĐỎ
+                let chan = nums.filter(n => n % 2 === 0).length;
+                if (chan === 0 || chan === 6) continue; // Loại toàn chẵn/lẻ
 
-    document.getElementById('list').addEventListener('click', e=>{
-      if(e.target.classList.contains('delete')){
-        const i = e.target.dataset.index;
-        sets.splice(i,1);
-        localStorage.setItem('powerSets', JSON.stringify(sets));
-        renderSets();
-      }
-    });
-
-    document.getElementById('copyAll').onclick = () => {
-      const text = sets.map(s=> s.main.map(pad).join(' ') + ' ' + pad(s.power)).join('\n');
-      navigator.clipboard.writeText(text);
-      alert('Đã copy tất cả bộ số!');
-    };
-
-    renderSets();
-  </script>
+                count++;
+                const item = document.createElement('div');
+                item.className = 'bg-gray-700 p-3 rounded-lg flex justify-between items-center border-l-4 border-blue-500';
+                item.innerHTML = `<span>${nums.map(n => n.toString().padStart(2, '0')).join('  ')}</span>
+                                 <span class="text-xs text-blue-300">${chan}C-${6-chan}L</span>`;
+                ticketList.appendChild(item);
+            }
+        }
+    </script>
 </body>
 </html>
