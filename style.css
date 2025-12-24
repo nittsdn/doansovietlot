@@ -1,0 +1,5 @@
+.num-btn { height: 40px; border-radius: 8px; font-weight: bold; font-size: 14px; background-color: #374151; }
+.num-disabled { background-color: #ef4444 !important; opacity: 0.3; text-decoration: line-through; }
+.num-hot { background-color: #f59e0b !important; color: black; box-shadow: 0 0 8px #f59e0b; }
+.num-cold { background-color: #3b82f6 !important; }
+.ring-white { outline: 4px solid white; z-index: 10; }
