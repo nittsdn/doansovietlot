@@ -1,13 +1,13 @@
 let historyData = [];
 let numberStats = {};
-const FILE_NAME = 'p655v3.xlsx - Sheet1.csv'; // Khớp với file của bạn
+const FILE_NAME = 'p655v3.xlsx - Sheet1.csv';
 
 // 1. Nạp từ CSV mặc định
 Papa.parse(FILE_NAME, {
     download: true,
     header: true,
     complete: function(results) {
-        historyData = results.data;
+        historyData = results.data.filter(row => row['6 số trúng'] || Object.values(row)[1]);
         processStats();
         initMap();
         updateUIStatus("✅ Dữ liệu V3 Sẵn sàng", historyData.length);
@@ -19,10 +19,10 @@ Papa.parse(FILE_NAME, {
 });
 
 function processStats() {
-    numberStats = {}; // Reset
+    numberStats = {};
     const recent = historyData.slice(-200);
     recent.forEach(row => {
-        let nums = row['6 số trúng'] || row['B'] || Object.values(row)[1];
+        let nums = row['6 số trúng'] || Object.values(row)[1];
         if (nums && typeof nums === 'string') {
             nums.split(' ').forEach(n => {
                 let num = parseInt(n);
@@ -33,46 +33,66 @@ function processStats() {
 }
 
 function updateUIStatus(msg, count) {
-    document.getElementById('status').innerText = msg;
-    document.getElementById('statInfo').innerText = `Đã nạp ${count} kỳ`;
+    const statusEl = document.getElementById('status');
+    if (statusEl) statusEl.innerText = msg;
+    const infoEl = document.getElementById('statInfo');
+    if (infoEl) infoEl.innerText = `Đã nạp ${count} kỳ`;
 }
 
-// 2. Quét số từ ketquadientoan.com
+// 2. Quét số từ Web (Sửa lỗi kết nối)
 async function fetchOnlineResults() {
-    updateUIStatus("⏳ Đang quét Web...", historyData.length);
-    const proxyUrl = "https://api.allorigins.win/get?url=";
-    const targetUrl = encodeURIComponent("https://www.ketquadientoan.com/tat-ca-ky-xo-so-power-655.html");
+    updateUIStatus("⏳ Đang thử kết nối dự phòng...", historyData.length);
+    
+    // Thử dùng Proxy dự phòng nếu AllOrigins lỗi
+    const proxyUrls = [
+        "https://api.allorigins.win/get?url=",
+        "https://corsproxy.io/?"
+    ];
+    
+    const targetUrl = "https://www.ketquadientoan.com/tat-ca-ky-xo-so-power-655.html";
+    let success = false;
 
-    try {
-        const response = await fetch(proxyUrl + targetUrl);
-        const data = await response.json();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(data.contents, 'text/html');
-        const rows = doc.querySelectorAll('tr');
-        
-        let onlineRecords = [];
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length >= 2) {
-                const ky = cells[0].innerText.trim();
-                const balls = Array.from(cells[1].querySelectorAll('.ball, span'))
-                                   .map(b => b.innerText.trim())
-                                   .filter(b => b.length > 0 && !isNaN(b));
-                if (balls.length >= 6) {
-                    onlineRecords.push({ "Kỳ": ky, "6 số trúng": balls.slice(0,6).join(' ') });
+    for (let proxy of proxyUrls) {
+        try {
+            const finalUrl = proxy === "https://corsproxy.io/?" ? `${proxy}${targetUrl}` : `${proxy}${encodeURIComponent(targetUrl)}`;
+            const response = await fetch(finalUrl);
+            const data = await response.json();
+            const html = data.contents || data; // Tùy cấu trúc proxy trả về
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const rows = doc.querySelectorAll('tr');
+            
+            let onlineRecords = [];
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 2) {
+                    const ky = cells[0].innerText.trim();
+                    const balls = Array.from(cells[1].querySelectorAll('.ball, span'))
+                                       .map(b => b.innerText.trim())
+                                       .filter(b => b.length > 0 && !isNaN(b));
+                    if (balls.length >= 6) {
+                        onlineRecords.push({ "Kỳ": ky, "6 số trúng": balls.slice(0,6).join(' ') });
+                    }
                 }
-            }
-        });
+            });
 
-        if (onlineRecords.length > 0) {
-            historyData = [...onlineRecords, ...historyData];
-            // Lọc trùng kỳ
-            historyData = Array.from(new Set(historyData.map(a => a.Kỳ))).map(k => historyData.find(a => a.Kỳ === k));
-            processStats();
-            initMap();
-            updateUIStatus("✅ Cập nhật Web thành công", historyData.length);
+            if (onlineRecords.length > 0) {
+                // Hợp nhất dữ liệu
+                historyData = [...onlineRecords, ...historyData];
+                historyData = Array.from(new Set(historyData.map(a => a.Kỳ))).map(k => historyData.find(a => a.Kỳ === k));
+                processStats();
+                initMap();
+                updateUIStatus("✅ Đã cập nhật từ Web", historyData.length);
+                success = true;
+                break; // Thành công thì thoát vòng lặp proxy
+            }
+        } catch (e) {
+            console.log("Thử proxy tiếp theo...");
         }
-    } catch (e) {
-        updateUIStatus("❌ Lỗi kết nối Web", historyData.length);
+    }
+
+    if (!success) {
+        updateUIStatus("❌ Web lỗi - Dùng tạm file CSV", historyData.length);
     }
 }
