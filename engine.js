@@ -21,7 +21,7 @@ async function loadData() {
             return { id: p[0], nums: p[1].trim().split(/\s+/).map(Number), pwr: Number(p[2]), date: p[3] };
         }).filter(d => d.nums && d.nums.length === 6).reverse();
 
-        const saved = localStorage.getItem('manual_update');
+        const saved = localStorage.getItem('manual_update_v4');
         if (saved) {
             const sObj = JSON.parse(saved);
             if (parseInt(sObj.id) > parseInt(db[0].id)) db.unshift(sObj);
@@ -31,10 +31,12 @@ async function loadData() {
         renderMap();
         renderResults();
         setupManualInput();
-    } catch (e) { document.getElementById('last-draw-date').innerText = "⚠️ Lỗi file data.csv"; }
+        initAutoJump();
+    } catch (e) { document.getElementById('last-draw-date').innerText = "⚠️ Cần file data.csv"; }
 }
 
 function analyzeData() {
+    if(!db.length) return;
     stats.last = db[0];
     const counts = {};
     db.slice(0, 50).forEach(d => d.nums.forEach(n => counts[n] = (counts[n] || 0) + 1));
@@ -49,7 +51,7 @@ function renderMap() {
         cell.className = 'num-cell';
         cell.innerText = i.toString().padStart(2, '0');
 
-        // Tự động chọn tất cả trừ kỳ trước
+        // Mặc định chọn tất cả, trừ 6 số kỳ trước
         if (!stats.last.nums.includes(i)) {
             cell.classList.add('active');
             activePool.push(i);
@@ -104,32 +106,59 @@ function renderResults() {
     });
 }
 
+// LOGIC MANUAL INPUT MỚI
 function setupManualInput() {
+    if(!stats.last) return;
     const dateSel = document.getElementById('input-date');
     const idInp = document.getElementById('input-id');
     dateSel.innerHTML = '';
-    let lastD = stats.last.date.split('/');
-    let curD = new Date(lastD[2], lastD[1]-1, lastD[0]);
+    
+    let lastParts = stats.last.date.split('/');
+    let nextDate = new Date(lastParts[2], lastParts[1]-1, lastParts[0]);
     idInp.value = parseInt(stats.last.id) + 1;
-    let f = 0;
-    while(f < 3) {
-        curD.setDate(curD.getDate()+1);
-        if([2,4,6].includes(curD.getDay())) {
-            let ds = `${String(curD.getDate()).padStart(2,'0')}/${String(curD.getMonth()+1).padStart(2,'0')}/${curD.getFullYear()}`;
+
+    // Tìm duy nhất 1 ngày tiếp theo (T3, T5, T7)
+    let found = false;
+    while(!found) {
+        nextDate.setDate(nextDate.getDate() + 1);
+        if([2,4,6].includes(nextDate.getDay())) {
+            let ds = `${String(nextDate.getDate()).padStart(2,'0')}/${String(nextDate.getMonth()+1).padStart(2,'0')}/${nextDate.getFullYear()}`;
             let o = document.createElement('option'); o.value = ds; o.innerText = ds;
-            dateSel.appendChild(o); f++;
+            dateSel.appendChild(o);
+            found = true;
         }
     }
 }
 
+function initAutoJump() {
+    const boxes = document.querySelectorAll('.ios-num-box');
+    boxes.forEach((box, idx) => {
+        box.oninput = () => {
+            if(box.value.length >= 2) {
+                if(idx < 5) boxes[idx+1].focus();
+                else document.getElementById('input-pwr').focus();
+            }
+        };
+    });
+}
+
 document.getElementById('save-manual-btn').onclick = () => {
-    const nums = document.getElementById('input-nums').value.trim();
-    const pwr = document.getElementById('input-pwr').value;
-    if(!nums || !pwr || nums.split(' ').length !== 6) return alert("Nhập đủ 6 số và Power!");
-    const entry = { id: document.getElementById('input-id').value, nums: nums.split(' ').map(Number).sort((a,b)=>a-b), pwr: Number(pwr), date: document.getElementById('input-date').value };
-    localStorage.setItem('manual_update', JSON.stringify(entry));
+    const boxes = document.querySelectorAll('.ios-num-box');
+    const nums = Array.from(boxes).map(b => b.value.trim());
+    const pwr = document.getElementById('input-pwr').value.trim();
+
+    if(nums.some(n => !n) || !pwr) return alert("Vui lòng nhập đủ 6 số Jackpot và Power!");
+    
+    const entry = { 
+        id: document.getElementById('input-id').value, 
+        nums: nums.map(Number).sort((a,b)=>a-b), 
+        pwr: Number(pwr), 
+        date: document.getElementById('input-date').value 
+    };
+    
+    localStorage.setItem('manual_update_v4', JSON.stringify(entry));
     db.unshift(entry); analyzeData(); renderMap(); renderResults();
-    alert("✅ Đã cập nhật thành công!");
+    alert("✅ Đã cập nhật kết quả kỳ mới!");
 };
 
 function openModal(i) {
