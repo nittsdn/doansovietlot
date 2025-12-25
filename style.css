@@ -184,4 +184,17 @@ body {
 
 .ios-input-custom, .ios-select-custom {
     background: #fff; border: 1px solid #d1d1d6; padding: 10px; border-radius: 10px;
-    font-size: 16px; font-weight: 600; outline
+    font-size: 16px; font-weight: 600; outline: none;
+}
+
+.ios-btn-action {
+    width: 100%; padding: 15px; border-radius: 14px; border: none;
+    background: #34c759; color: #fff; font-weight: 700; font-size: 16px;
+}
+
+/* Modal */
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2000; }
+.ios-sheet { position: absolute; bottom: 0; width: 100%; background: #fff; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; }
+.sheet-handle { width: 36px; height: 5px; background: #d1d1d6; border-radius: 3px; margin: 0 auto 15px; }
+.strategy-opt { padding: 18px; border-bottom: 0.5px solid #f2f2f7; list-style: none; text-align: center; font-weight: 600; color: var(--ios-blue); }
+.sheet-close { width: 100%; padding: 15px; border: none; background: #f2f2f7; border-radius: 15px; margin-top: 10px; font-weight: bold; color: #ff3b30; }
