@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Vietlott Gem V3.8</title>
+    <title>Vietlott Gem V3.9 - Pastel Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
         <div class="header-content">
             <div class="draw-info">
                 <h1 id="last-draw-id">Kỳ --</h1>
-                <p id="last-draw-date">Đang tải dữ liệu...</p>
+                <p id="last-draw-date">Đang tải...</p>
             </div>
             <div class="last-result-pills" id="last-result-numbers"></div>
             <button id="sync-btn" class="ios-btn-icon">🔄</button>
@@ -22,7 +22,7 @@
 
     <main class="ios-container">
         <section class="ios-widget card-pastel">
-            <div class="widget-header">BẢN ĐỒ CHIẾN THUẬT (AUTO-SELECT)</div>
+            <div class="widget-header">BẢN ĐỒ CHIẾN THUẬT</div>
             <div id="number-grid" class="grid-55"></div>
             <div class="map-legend">
                 <span><i class="dot ruby"></i> Ruby</span>
@@ -37,8 +37,28 @@
             <p id="warning-text" style="display:none; color: #ff3b30; font-size: 12px; margin-top: 10px;">Vui lòng chọn ít nhất 12 số</p>
         </section>
 
-        <section id="results-container" class="ios-list">
-            </section>
+        <section id="results-container" class="ios-list"></section>
+
+        <section class="ios-widget card-pastel manual-update">
+            <div class="widget-header">CẬP NHẬT KỲ MỚI (DỰ PHÒNG)</div>
+            <div class="input-group">
+                <label>Chọn Ngày Sổ (T3, 5, 7):</label>
+                <select id="input-date" class="ios-input"></select>
+            </div>
+            <div class="input-group">
+                <label>Kỳ Số:</label>
+                <input type="text" id="input-id" class="ios-input" readonly>
+            </div>
+            <div class="input-group">
+                <label>6 Số Trúng (VD: 01 12 25 33 45 55):</label>
+                <input type="text" id="input-nums" class="ios-input" placeholder="Nhập 6 số cách nhau dấu cách">
+            </div>
+            <div class="input-group">
+                <label>Số Power:</label>
+                <input type="number" id="input-pwr" class="ios-input" placeholder="Số Power">
+            </div>
+            <button id="save-manual-btn" class="ios-btn-save">LƯU & CẬP NHẬT APP</button>
+        </section>
     </main>
 
     <div id="strategy-modal" class="modal">
