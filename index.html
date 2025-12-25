@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Vietlott Gem V3.9 - Pastel Edition</title>
+    <title>Vietlott Gem V3.9.1</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
         <div class="header-content">
             <div class="draw-info">
                 <h1 id="last-draw-id">Kỳ --</h1>
-                <p id="last-draw-date">Đang tải...</p>
+                <p id="last-draw-date">Đang tải dữ liệu...</p>
             </div>
             <div class="last-result-pills" id="last-result-numbers"></div>
             <button id="sync-btn" class="ios-btn-icon">🔄</button>
@@ -21,52 +21,54 @@
     </header>
 
     <main class="ios-container">
-        <section class="ios-widget card-pastel">
+        <section class="ios-widget card-main">
             <div class="widget-header">BẢN ĐỒ CHIẾN THUẬT</div>
             <div id="number-grid" class="grid-55"></div>
             <div class="map-legend">
-                <span><i class="dot ruby"></i> Ruby</span>
-                <span><i class="dot sapphire"></i> Sapphire</span>
-                <span><i class="ring gold"></i> Repeat</span>
-                <span><i class="bolt"></i> ⚡ Power</span>
+                <span class="legend-item"><i class="dot ruby"></i> Ruby</span>
+                <span class="legend-item"><i class="dot sapphire"></i> Sapphire</span>
+                <span class="legend-item"><i class="ring gold"></i> Kỳ trước</span>
+                <span class="legend-item"><i class="bolt"></i> ⚡ Power</span>
             </div>
         </section>
 
         <section class="action-center">
             <button id="generate-btn" class="ios-main-btn">KÍCH HOẠT V3 SYSTEM</button>
-            <p id="warning-text" style="display:none; color: #ff3b30; font-size: 12px; margin-top: 10px;">Vui lòng chọn ít nhất 12 số</p>
+            <p id="warning-text" style="display:none;">⚠️ Vui lòng chọn ít nhất 12 số</p>
         </section>
 
         <section id="results-container" class="ios-list"></section>
 
-        <section class="ios-widget card-pastel manual-update">
+        <section class="ios-widget card-manual">
             <div class="widget-header">CẬP NHẬT KỲ MỚI (DỰ PHÒNG)</div>
-            <div class="input-group">
-                <label>Chọn Ngày Sổ (T3, 5, 7):</label>
-                <select id="input-date" class="ios-input"></select>
+            <div class="form-row">
+                <div class="input-item">
+                    <label>Ngày sổ</label>
+                    <select id="input-date" class="ios-select-custom"></select>
+                </div>
+                <div class="input-item">
+                    <label>Kỳ số</label>
+                    <input type="text" id="input-id" class="ios-input-custom" readonly>
+                </div>
             </div>
-            <div class="input-group">
-                <label>Kỳ Số:</label>
-                <input type="text" id="input-id" class="ios-input" readonly>
+            <div class="input-item">
+                <label>6 Số trúng (Cách nhau dấu cách)</label>
+                <input type="text" id="input-nums" class="ios-input-custom" placeholder="Ví dụ: 05 12 24 36 41 55">
             </div>
-            <div class="input-group">
-                <label>6 Số Trúng (VD: 01 12 25 33 45 55):</label>
-                <input type="text" id="input-nums" class="ios-input" placeholder="Nhập 6 số cách nhau dấu cách">
+            <div class="input-item">
+                <label>Số Power</label>
+                <input type="number" id="input-pwr" class="ios-input-custom" placeholder="00">
             </div>
-            <div class="input-group">
-                <label>Số Power:</label>
-                <input type="number" id="input-pwr" class="ios-input" placeholder="Số Power">
-            </div>
-            <button id="save-manual-btn" class="ios-btn-save">LƯU & CẬP NHẬT APP</button>
+            <button id="save-manual-btn" class="ios-btn-action">LƯU & CẬP NHẬT NGAY</button>
         </section>
     </main>
 
     <div id="strategy-modal" class="modal">
         <div class="modal-content ios-sheet">
-            <div class="handle"></div>
-            <h3>Chọn Chiến Thuật</h3>
+            <div class="sheet-handle"></div>
+            <h3 class="sheet-title">Chọn Chiến Thuật</h3>
             <ul id="strategy-options"></ul>
-            <button class="close-btn" onclick="closeModal()">Đóng</button>
+            <button class="sheet-close" onclick="closeModal()">Hủy bỏ</button>
         </div>
     </div>
 
