@@ -4,17 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Vietlott Pro V3 - Gem Edition</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Vietlott Gem Pastel</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header class="ios-header">
-        <div class="blur-bg"></div>
         <div class="header-content">
             <div class="draw-info">
-                <h1 id="last-draw-id">--</h1>
-                <p id="last-draw-date">Đang tải...</p>
+                <h1 id="last-draw-id">Kỳ --</h1>
+                <p id="last-draw-date">Đang cập nhật...</p>
             </div>
             <div class="last-result-pills" id="last-result-numbers"></div>
             <button id="sync-btn" class="ios-btn-icon">🔄</button>
@@ -22,20 +21,20 @@
     </header>
 
     <main class="ios-container">
-        <section class="ios-widget">
-            <div class="widget-header">BẢN ĐỒ NHIỆT & SOI CẦU</div>
+        <section class="ios-widget card-pastel">
+            <div class="widget-header">BẢN ĐỒ NHIỆT (TỰ ĐỘNG LỌC SỐ XẤU)</div>
             <div id="number-grid" class="grid-55"></div>
             <div class="map-legend">
-                <span class="legend-item"><i class="dot ruby"></i> Ruby</span>
-                <span class="legend-item"><i class="dot sapphire"></i> Sapphire</span>
-                <span class="legend-item"><i class="ring gold"></i> Repeat</span>
-                <span class="legend-item"><i class="bolt"></i> ⚡ Power</span>
+                <span><i class="dot ruby"></i> Hot</span>
+                <span><i class="dot sapphire"></i> Lạnh</span>
+                <span><i class="ring gold"></i> Repeat</span>
+                <span><i class="bolt"></i> ⚡ Power</span>
             </div>
         </section>
 
         <section class="action-center">
-            <button id="generate-btn" class="ios-main-btn" disabled>KÍCH HOẠT V3 SYSTEM</button>
-            <p id="warning-text">Vui lòng chọn ít nhất 12 số</p>
+            <button id="generate-btn" class="ios-main-btn">KÍCH HOẠT V3 SYSTEM</button>
+            <p id="warning-text" style="display:none; color: #ff3b30;">Vui lòng chọn ít nhất 12 số</p>
         </section>
 
         <section id="results-container" class="ios-list">
@@ -45,12 +44,11 @@
     <div id="strategy-modal" class="modal">
         <div class="modal-content ios-sheet">
             <div class="handle"></div>
-            <h3>Chọn Chiến Thuật</h3>
+            <h3>Thay Đổi Bảo Thạch</h3>
             <ul id="strategy-options"></ul>
-            <button class="close-btn" onclick="closeModal()">Hủy</button>
+            <button class="close-btn" onclick="closeModal()">Đóng</button>
         </div>
     </div>
-
     <script src="engine.js"></script>
 </body>
 </html>
