@@ -1,58 +1,42 @@
 :root {
-    --bg-light: #f0f2f5;
-    --card-white: #ffffff;
-    --pastel-blue: #e3f2fd;
-    --pastel-pink: #fce4ec;
-    --text-main: #1c1c1e;
+    --bg-light: #f2f2f7; --card-white: #ffffff;
+    --pastel-blue: #e3f2fd; --pastel-pink: #fce4ec;
+    --text-main: #1c1c1e; --ios-blue: #007aff;
     --ruby: #ff8a80; --sapphire: #81d4fa; --topaz: #ffd54f;
     --diamond: #ce93d8; --emerald: #a5d6a7;
 }
 
-body {
-    background: var(--bg-light); color: var(--text-main);
-    font-family: -apple-system, system-ui, sans-serif;
-    margin: 0; padding-top: env(safe-area-inset-top);
-}
+body { background: var(--bg-light); color: var(--text-main); font-family: -apple-system, sans-serif; margin: 0; padding-top: env(safe-area-inset-top); user-select: none; }
+.ios-header { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 100; padding: 15px 20px; border-bottom: 0.5px solid #d1d1d6; }
+.header-content { display: flex; justify-content: space-between; align-items: center; }
+.draw-info h1 { font-size: 22px; color: var(--ios-blue); margin: 0; }
+.draw-info p { font-size: 11px; color: #8e8e93; margin: 0; }
+.last-result-pills { display: flex; gap: 4px; }
+.pill { background: #e5e5ea; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: bold; }
+.pill.pwr { background: #f5d3f5; color: #af52de; border: 1px solid #af52de; }
 
-.ios-header {
-    background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px); position: sticky; top: 0; z-index: 100;
-    padding: 15px 20px; border-bottom: 1px solid #ddd;
-}
-
-.draw-info h1 { font-size: 22px; color: #007aff; margin: 0; }
-.draw-info p { font-size: 12px; color: #8e8e93; margin: 0; }
-
-.card-pastel {
-    background: var(--card-white); margin: 15px; padding: 15px;
-    border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-}
-
+.card-pastel { background: var(--card-white); margin: 15px; padding: 15px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
 .grid-55 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-.num-cell {
-    aspect-ratio: 1; border-radius: 12px; background: #f2f2f7;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 600; font-size: 14px; border: 2px solid transparent; color: #ccc; /* Mặc định mờ */
-    transition: 0.3s;
-}
-
-/* Khi số được chọn (Active) */
-.num-cell.active { background: var(--pastel-blue); color: var(--text-main); border-color: #bbdefb; }
+.num-cell { aspect-ratio: 1; border-radius: 12px; background: #e5e5ea; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; border: 2px solid transparent; color: #a1a1a1; transition: 0.2s; }
+.num-cell.active { background: var(--card-white); color: var(--text-main); border-color: #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 .num-cell.active.hot { background: var(--pastel-pink); }
 .num-cell.repeat { border-color: var(--topaz); }
 .num-cell.power { border-color: var(--diamond); box-shadow: 0 0 5px var(--diamond); }
 
-.ios-main-btn {
-    width: 85%; height: 55px; background: #007aff; color: white;
-    border: none; border-radius: 16px; font-size: 17px; font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0,122,255,0.3);
-}
+.ios-main-btn { width: 85%; height: 55px; background: var(--ios-blue); color: white; border: none; border-radius: 18px; font-size: 17px; font-weight: 600; margin: 20px 0; box-shadow: 0 4px 15px rgba(0,122,255,0.3); }
+.ios-main-btn:active { opacity: 0.7; transform: scale(0.98); }
 
-.gem-card {
-    background: white; margin: 10px 15px; padding: 15px;
-    border-radius: 18px; display: flex; justify-content: space-between; align-items: center;
-}
-.gem-badge { padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 700; color: #fff; }
+.gem-card { background: white; margin: 10px 15px; padding: 15px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+.gem-badge { padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 4px; }
 .ruby { background: var(--ruby); } .sapphire { background: var(--sapphire); }
 .topaz { background: var(--topaz); color: #444; } .diamond { background: var(--diamond); }
-.emerald { background: var(--emerald); }
+.emerald { background: var(--emerald); color: #444; }
+
+.res-nums { font-family: monospace; font-size: 19px; font-weight: bold; letter-spacing: 1px; color: #333; }
+
+/* iOS Sheet */
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2000; }
+.ios-sheet { position: absolute; bottom: 0; width: 100%; background: #fff; border-radius: 25px 25px 0 0; padding: 20px; box-sizing: border-box; }
+.handle { width: 40px; height: 5px; background: #e5e5ea; border-radius: 3px; margin: 0 auto 15px; }
+.strategy-opt { padding: 15px; border-bottom: 0.5px solid #eee; font-weight: 600; list-style: none; text-align: center; color: var(--ios-blue); }
+.close-btn { width: 100%; padding: 15px; border: none; background: #f2f2f7; border-radius: 15px; margin-top: 10px; font-weight: bold; color: #ff3b30; }
