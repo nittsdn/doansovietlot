@@ -1,129 +1,115 @@
-let disabledNumbers = new Set();
-let pinnedNumbers = new Set();
-let currentTickets = [];
+let pool = Array.from({length: 55}, (_, i) => i + 1);
+let activePool = [...pool];
+let db = [], stats = { hot: [], cold: [], last: null, pairs: {}, bacNho: {} };
+let strategies = ["RUBY", "SAPPHIRE", "TOPAZ", "DIAMOND", "EMERALD"];
+let currentConfig = ["RUBY", "SAPPHIRE", "TOPAZ", "DIAMOND", "EMERALD"];
 
-function initMap() {
-    const map = document.getElementById('numberMap');
-    if (!map) return;
-    map.innerHTML = '';
-
-    for (let i = 1; i <= 55; i++) {
-        const container = document.createElement('div');
-        // LOGIC HOT/COLD: Dựa trên stats 200 kỳ
-        const isHot = numberStats[i] > 25;
-        const isCold = numberStats[i] < 15;
-        
-        container.className = `num-btn ${isHot ? 'num-hot' : isCold ? 'num-cold' : ''}`;
-        container.id = `num-${i}`;
-        
-        // Hiển thị số
-        const numLabel = document.createElement('span');
-        numLabel.innerText = i.toString().padStart(2, '0');
-        numLabel.className = "cursor-pointer w-full h-full flex items-center justify-center";
-        numLabel.onclick = () => toggleDisable(i);
-
-        // Nút Ghim trực quan (📌)
-        const pinBtn = document.createElement('span');
-        pinBtn.innerHTML = "📌";
-        pinBtn.className = "pin-icon cursor-pointer p-1";
-        pinBtn.onclick = (e) => {
-            e.stopPropagation();
-            togglePin(i);
-        };
-
-        container.appendChild(numLabel);
-        container.appendChild(pinBtn);
-        map.appendChild(container);
-    }
+async function loadData() {
+    try {
+        const res = await fetch('data.csv?v=' + Date.now());
+        const text = await res.text();
+        const lines = text.trim().split('\n').slice(1);
+        db = lines.map(line => {
+            const parts = line.split(',');
+            return { id: parts[0], nums: parts[1].split(' ').map(Number), pwr: Number(parts[2]), date: parts[3] };
+        }).reverse();
+        analyzeDB();
+        renderMap();
+        updateUI();
+    } catch (e) { alert("Lỗi tải dữ liệu!"); }
 }
 
-function toggleDisable(i) {
-    const el = document.getElementById(`num-${i}`);
-    if (disabledNumbers.has(i)) {
-        disabledNumbers.delete(i);
-        el.classList.remove('num-disabled');
-    } else {
-        disabledNumbers.add(i);
-        pinnedNumbers.delete(i);
-        el.classList.remove('is-pinned');
-        el.classList.add('num-disabled');
-    }
-}
-
-function togglePin(i) {
-    if (disabledNumbers.has(i)) return;
-    const el = document.getElementById(`num-${i}`);
-    if (pinnedNumbers.has(i)) {
-        pinnedNumbers.delete(i);
-        el.classList.remove('is-pinned');
-    } else if (pinnedNumbers.size < 6) {
-        pinnedNumbers.add(i);
-        el.classList.add('is-pinned');
-    }
-}
-
-// LOGIC SINH SỐ CHIẾN THUẬT (FULL SPECTRUM + PHỄU LỌC 3 CẤP)
-function generateFinalTickets() {
-    const list = document.getElementById('ticketList');
-    list.innerHTML = '';
-    currentTickets = [];
-    document.getElementById('results').classList.remove('hidden');
+function analyzeDB() {
+    stats.last = db[0];
+    const allNums = db.flatMap(d => d.nums);
+    const counts = {};
+    allNums.forEach(n => counts[n] = (counts[n] || 0) + 1);
+    stats.hot = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(1,16).map(x => Number(x[0]));
     
-    // Logic "Độ phủ" (Full Spectrum)
-    let usedNumbersInSession = new Set(); 
+    // Thống kê Bạc Nhớ (Số A kỳ trước -> Số B kỳ sau)
+    for(let i=0; i < db.length - 1; i++) {
+        db[i+1].nums.forEach(n_prev => {
+            if(!stats.bacNho[n_prev]) stats.bacNho[n_prev] = {};
+            db[i].nums.forEach(n_curr => {
+                stats.bacNho[n_prev][n_curr] = (stats.bacNho[n_prev][n_curr] || 0) + 1;
+            });
+        });
+    }
+}
 
-    while (currentTickets.length < 5) {
-        let s = Array.from(pinnedNumbers);
+function generateSet(type) {
+    let res = [], last = stats.last;
+    try {
+        if (type === "RUBY") { // HOT
+            res = shuffle(stats.hot.filter(n => activePool.includes(n))).slice(0, 3);
+        } else if (type === "SAPPHIRE") { // COLD (Ngẫu nhiên từ pool hiện tại)
+            res = shuffle(activePool).slice(0, 2);
+        } else if (type === "DIAMOND") { // REMIX PRO
+            let r = last.nums[Math.floor(Math.random()*6)];
+            if(activePool.includes(r)) res.push(r);
+            if(activePool.includes(last.pwr) && Math.random() < 0.2) res.push(last.pwr);
+        } else if (type === "TOPAZ") { // GOLD RATIO
+            // Logic tổng sẽ check ở bước filter
+        }
+
+        // Lấp đầy & Lọc Vùng Đỏ
         let attempts = 0;
-        
-        while (s.length < 6 && attempts < 2000) {
-            let r = Math.floor(Math.random() * 55) + 1;
-            
-            if (!s.includes(r) && !disabledNumbers.has(r)) {
-                // Ưu tiên số chưa dùng trong phiên để tăng độ phủ
-                if (currentTickets.length < 3 || !usedNumbersInSession.has(r) || attempts > 1000) {
-                    s.push(r);
-                }
+        while(attempts < 500) {
+            let temp = [...res];
+            while(temp.length < 6) {
+                let n = activePool[Math.floor(Math.random()*activePool.length)];
+                if(!temp.includes(n)) temp.push(n);
             }
+            temp.sort((a,b) => a-b);
+            if(validateRedZone(temp, type)) return temp;
             attempts++;
         }
-        s.sort((a, b) => a - b);
+    } catch(e) { return fallback(type); }
+    return activePool.slice(0,6);
+}
 
-        // PHỄU LỌC 3 CẤP (QUAN TRỌNG NHẤT)
-        let chan = s.filter(n => n % 2 === 0).length;
-        let tong = s.reduce((a, b) => a + b, 0);
-        let s_str = s.map(n => n.toString().padStart(2, '0')).join(' ');
+function validateRedZone(nums, type) {
+    const sum = nums.reduce((a,b) => a+b, 0);
+    if(sum < 82 || sum > 250) return false;
+    if(type === "TOPAZ" && (sum < 130 || sum > 190)) return false;
+    let even = nums.filter(n => n%2===0).length;
+    if(even === 0 || even === 6) return false;
+    return true;
+}
 
-        // 1. Lọc Vùng Đỏ (Chẵn lẻ 0-6 hoặc 6-0)
-        if (chan === 0 || chan === 6) continue;
-        
-        // 2. Lọc Tổng Golden (110 - 210)
-        if (tong < 110 || tong > 210) continue;
-        
-        // 3. Đối soát lịch sử Jackpot (Né các kỳ cũ như 12, 13, 28, 33...)
-        const isDuplicateJackpot = historyData.some(h => {
-            const historyStr = h['6 số trúng'] || Object.values(h)[1] || '';
-            return historyStr.includes(s_str);
-        });
-        if (isDuplicateJackpot) continue;
+function renderResults() {
+    const container = document.getElementById('results-container');
+    container.innerHTML = '';
+    currentConfig.forEach((strat, idx) => {
+        const set = generateSet(strat);
+        container.innerHTML += `
+            <div class="gem-card">
+                <div class="gem-badge ${strat.toLowerCase()}" onclick="openModal(${idx})">${strat} ▼</div>
+                <div class="res-nums">${set.map(n => n.toString().padStart(2,'0')).join(' ')}</div>
+            </div>`;
+    });
+}
 
-        currentTickets.push(s);
-        s.forEach(n => usedNumbersInSession.add(n));
-
-        // Hiển thị kết quả mượt mà
-        const item = document.createElement('div');
-        item.className = 'bg-gray-700 p-3 rounded-xl flex justify-between items-center border-l-4 border-blue-500 animate-pop';
-        item.innerHTML = `
-            <div class="font-mono text-lg font-bold tracking-tighter">${s_str}</div>
-            <div class="text-[9px] text-gray-400 text-right uppercase">
-                Tổng: ${tong} | ${chan}C-${6-chan}L
-            </div>
-        `;
-        list.appendChild(item);
+function renderMap() {
+    const grid = document.getElementById('number-grid');
+    grid.innerHTML = '';
+    for(let i=1; i<=55; i++) {
+        let cell = document.createElement('div');
+        cell.className = `num-cell active ${stats.hot.includes(i)?'hot':''} ${stats.last.nums.includes(i)?'repeat':''} ${stats.last.pwr===i?'power':''}`;
+        cell.innerText = i.toString().padStart(2,'0');
+        cell.onclick = () => { cell.classList.toggle('active'); updatePool(); };
+        grid.appendChild(cell);
     }
 }
 
-function copyAll() {
-    const text = currentTickets.map(t => t.map(n => n.toString().padStart(2, '0')).join(' ')).join('\n');
-    navigator.clipboard.writeText(text).then(() => alert("Đã copy 5 bộ số!"));
+function updatePool() {
+    activePool = Array.from(document.querySelectorAll('.num-cell.active')).map(c => Number(c.innerText));
+    const btn = document.getElementById('generate-btn');
+    btn.disabled = activePool.length < 12;
+    document.getElementById('warning-text').style.display = activePool.length < 12 ? 'block' : 'none';
 }
+
+function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+document.getElementById('generate-btn').onclick = renderResults;
+document.getElementById('sync-btn').onclick = loadData;
+loadData();
