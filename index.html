@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Vietlott Pro V4 - Gem Edition</title>
+    <title>Vietlott Gem V4.2 - Copy System</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,7 +12,7 @@
         <div class="header-content">
             <div class="draw-info">
                 <h1 id="last-draw-id">Kỳ --</h1>
-                <p id="last-draw-date">Đang tải dữ liệu...</p>
+                <p id="last-draw-date">Đang tải...</p>
             </div>
             <div class="last-result-pills" id="last-result-numbers"></div>
             <button id="sync-btn" class="ios-btn-icon">🔄</button>
@@ -22,38 +21,31 @@
 
     <main class="ios-container">
         <section class="ios-widget card-main">
-            <div class="widget-header">BẢN ĐỒ CHIẾN THUẬT (AUTO-SELECT)</div>
+            <div class="widget-header">BẢN ĐỒ SOI CẦU CHI TIẾT</div>
             <div id="number-grid" class="grid-55"></div>
-            <div class="map-legend">
-                <span class="legend-item"><i class="dot ruby"></i> Ruby</span>
-                <span class="legend-item"><i class="dot sapphire"></i> Sapphire</span>
-                <span class="legend-item"><i class="ring gold"></i> Kỳ trước</span>
-                <span class="legend-item"><i class="bolt"></i> ⚡ Power</span>
+            
+            <div class="map-explanation">
+                <div class="exp-item"><i class="dot ruby"></i> <span><strong>Số Nóng:</strong> Hay về gần đây</span></div>
+                <div class="exp-item"><i class="dot sapphire"></i> <span><strong>Số Lạnh:</strong> Lâu chưa xuất hiện</span></div>
+                <div class="exp-item"><i class="ring gold"></i> <span><strong>Vừa ra:</strong> Số của kỳ trước</span></div>
+                <div class="exp-item"><span class="bolt-icon">⚡</span> <span><strong>Số Power:</strong> Tỷ lệ rơi lại 12%</span></div>
             </div>
         </section>
 
         <section class="action-center">
             <button id="generate-btn" class="ios-main-btn">KÍCH HOẠT V4 SYSTEM</button>
-            <p id="warning-text" style="display:none; color: #ff3b30; font-size: 11px;">⚠️ Chọn ít nhất 12 số để thuật toán chạy</p>
         </section>
 
         <section id="results-container" class="ios-list"></section>
 
         <section class="ios-widget card-manual">
-            <div class="widget-header">NHẬP KẾT QUẢ MỚI NHẤT</div>
+            <div class="widget-header">CẬP NHẬT KỲ MỚI</div>
             <div class="form-row">
-                <div class="input-item">
-                    <label>Ngày sổ tiếp theo</label>
-                    <select id="input-date" class="ios-select-custom"></select>
-                </div>
-                <div class="input-item">
-                    <label>Kỳ số</label>
-                    <input type="text" id="input-id" class="ios-input-custom" readonly>
-                </div>
+                <div class="input-item"><label>Ngày sổ</label><select id="input-date" class="ios-input-custom"></select></div>
+                <div class="input-item"><label>Kỳ số</label><input type="text" id="input-id" class="ios-input-custom" readonly></div>
             </div>
-            
             <div class="input-item">
-                <label>6 Số trúng giải Jackpot</label>
+                <label>6 Số trúng</label>
                 <div class="num-input-group">
                     <input type="tel" class="ios-num-box" maxlength="2" placeholder="--">
                     <input type="tel" class="ios-num-box" maxlength="2" placeholder="--">
@@ -63,25 +55,16 @@
                     <input type="tel" class="ios-num-box" maxlength="2" placeholder="--">
                 </div>
             </div>
-
             <div class="input-item">
                 <label>Số Power</label>
-                <input type="tel" id="input-pwr" class="ios-input-custom" maxlength="2" placeholder="00" style="width: 60px; text-align: center;">
+                <input type="tel" id="input-pwr" class="ios-input-custom" maxlength="2" placeholder="00" style="width: 60px;">
             </div>
-            
-            <button id="save-manual-btn" class="ios-btn-action">CẬP NHẬT KẾT QUẢ</button>
+            <button id="save-manual-btn" class="ios-btn-action">LƯU KẾT QUẢ</button>
         </section>
     </main>
 
-    <div id="strategy-modal" class="modal">
-        <div class="modal-content ios-sheet">
-            <div class="sheet-handle"></div>
-            <h3 class="sheet-title">Chọn Chiến Thuật</h3>
-            <ul id="strategy-options"></ul>
-            <button class="sheet-close" onclick="closeModal()">Đóng</button>
-        </div>
-    </div>
-
+    <div id="strategy-modal" class="modal"><div class="modal-content ios-sheet"><div class="sheet-handle"></div><h3 class="sheet-title">Chọn Chiến Thuật</h3><ul id="strategy-options"></ul><button class="sheet-close" onclick="closeModal()">Đóng</button></div></div>
+    
     <script src="engine.js"></script>
 </body>
 </html>
