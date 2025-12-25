@@ -1,30 +1,26 @@
-let db = [], stats = { hot: [], last: null, bacNho: {} }, activePool = [];
+let db = [], stats = { hot: [], last: null }, activePool = [];
 let currentStrategies = ["RUBY", "SAPPHIRE", "TOPAZ", "DIAMOND", "EMERALD"];
 let editingRowIndex = null;
 
 const GEMS = {
-    RUBY: { name: "🔥 RUBY", color: "ruby", desc: "Săn số Hot" },
-    SAPPHIRE: { name: "❄️ SAPPHIRE", color: "sapphire", desc: "Săn số Nguội" },
-    TOPAZ: { name: "🏆 TOPAZ", color: "topaz", desc: "Tỷ lệ Vàng" },
-    DIAMOND: { name: "💎 DIAMOND", color: "diamond", desc: "Remix/Bạc nhớ" },
-    EMERALD: { name: "❇️ EMERALD", color: "emerald", desc: "An toàn" }
+    RUBY: { name: "🔥 RUBY", color: "ruby" },
+    SAPPHIRE: { name: "❄️ SAPPHIRE", color: "sapphire" },
+    TOPAZ: { name: "🏆 TOPAZ", color: "topaz" },
+    DIAMOND: { name: "💎 DIAMOND", color: "diamond" },
+    EMERALD: { name: "❇️ EMERALD", color: "emerald" }
 };
 
 async function loadData() {
-    const statusText = document.getElementById('last-draw-date');
-    statusText.innerText = "🔄 Đang tải dữ liệu...";
     try {
         const response = await fetch('data.csv?v=' + Date.now());
-        if (!response.ok) throw new Error();
         const text = await response.text();
         const lines = text.trim().split(/\r?\n/);
         
         db = lines.slice(1).map(line => {
             const p = line.split(',');
             return { id: p[0], nums: p[1].trim().split(/\s+/).map(Number), pwr: Number(p[2]), date: p[3] };
-        }).filter(d => d.nums.length === 6).reverse();
+        }).filter(d => d.nums && d.nums.length === 6).reverse();
 
-        // Kiểm tra LocalStorage (Số nhập tay)
         const saved = localStorage.getItem('manual_update');
         if (saved) {
             const sObj = JSON.parse(saved);
@@ -35,9 +31,7 @@ async function loadData() {
         renderMap();
         renderResults();
         setupManualInput();
-    } catch (e) {
-        statusText.innerText = "❌ Lỗi: Không thể load data.csv";
-    }
+    } catch (e) { document.getElementById('last-draw-date').innerText = "⚠️ Lỗi file data.csv"; }
 }
 
 function analyzeData() {
@@ -55,7 +49,7 @@ function renderMap() {
         cell.className = 'num-cell';
         cell.innerText = i.toString().padStart(2, '0');
 
-        // MẶC ĐỊNH CHỌN HẾT, TRỪ SỐ KỲ TRƯỚC
+        // Tự động chọn tất cả trừ kỳ trước
         if (!stats.last.nums.includes(i)) {
             cell.classList.add('active');
             activePool.push(i);
@@ -74,6 +68,7 @@ function renderMap() {
 function updatePool() {
     activePool = Array.from(document.querySelectorAll('.num-cell.active')).map(c => Number(c.innerText));
     document.getElementById('generate-btn').disabled = activePool.length < 12;
+    document.getElementById('warning-text').style.display = activePool.length < 12 ? 'block' : 'none';
 }
 
 function updateHeader() {
@@ -89,11 +84,9 @@ function generateSet(type) {
         let r = stats.last.nums[Math.floor(Math.random()*6)];
         if(activePool.includes(r)) res.push(r);
     }
-    let attempts = 0;
-    while(res.length < 6 && attempts < 1000) {
+    while(res.length < 6) {
         let n = activePool[Math.floor(Math.random()*activePool.length)];
         if(!res.includes(n)) res.push(n);
-        attempts++;
     }
     return res.sort((a,b) => a-b);
 }
@@ -103,10 +96,9 @@ function renderResults() {
     container.innerHTML = '';
     currentStrategies.forEach((strat, idx) => {
         const set = generateSet(strat);
-        const gem = GEMS[strat];
         container.innerHTML += `
             <div class="gem-card">
-                <div class="gem-badge ${gem.color}" onclick="openModal(${idx})">${gem.name} ▼</div>
+                <div class="gem-badge ${GEMS[strat].color}" onclick="openModal(${idx})">${GEMS[strat].name} ▼</div>
                 <div class="res-nums">${set.map(n => n.toString().padStart(2,'0')).join(' ')}</div>
             </div>`;
     });
@@ -137,7 +129,7 @@ document.getElementById('save-manual-btn').onclick = () => {
     const entry = { id: document.getElementById('input-id').value, nums: nums.split(' ').map(Number).sort((a,b)=>a-b), pwr: Number(pwr), date: document.getElementById('input-date').value };
     localStorage.setItem('manual_update', JSON.stringify(entry));
     db.unshift(entry); analyzeData(); renderMap(); renderResults();
-    alert("Đã cập nhật!");
+    alert("✅ Đã cập nhật thành công!");
 };
 
 function openModal(i) {
