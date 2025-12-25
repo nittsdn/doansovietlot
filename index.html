@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Vietlott Gem V3.9.1</title>
+    <title>Vietlott Pro V4 - Gem Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,7 +22,7 @@
 
     <main class="ios-container">
         <section class="ios-widget card-main">
-            <div class="widget-header">BẢN ĐỒ CHIẾN THUẬT</div>
+            <div class="widget-header">BẢN ĐỒ CHIẾN THUẬT (AUTO-SELECT)</div>
             <div id="number-grid" class="grid-55"></div>
             <div class="map-legend">
                 <span class="legend-item"><i class="dot ruby"></i> Ruby</span>
@@ -33,17 +33,17 @@
         </section>
 
         <section class="action-center">
-            <button id="generate-btn" class="ios-main-btn">KÍCH HOẠT V3 SYSTEM</button>
-            <p id="warning-text" style="display:none;">⚠️ Vui lòng chọn ít nhất 12 số</p>
+            <button id="generate-btn" class="ios-main-btn">KÍCH HOẠT V4 SYSTEM</button>
+            <p id="warning-text" style="display:none; color: #ff3b30; font-size: 11px;">⚠️ Chọn ít nhất 12 số để thuật toán chạy</p>
         </section>
 
         <section id="results-container" class="ios-list"></section>
 
         <section class="ios-widget card-manual">
-            <div class="widget-header">CẬP NHẬT KỲ MỚI (DỰ PHÒNG)</div>
+            <div class="widget-header">NHẬP KẾT QUẢ MỚI NHẤT</div>
             <div class="form-row">
                 <div class="input-item">
-                    <label>Ngày sổ</label>
+                    <label>Ngày sổ tiếp theo</label>
                     <select id="input-date" class="ios-select-custom"></select>
                 </div>
                 <div class="input-item">
@@ -51,15 +51,25 @@
                     <input type="text" id="input-id" class="ios-input-custom" readonly>
                 </div>
             </div>
+            
             <div class="input-item">
-                <label>6 Số trúng (Cách nhau dấu cách)</label>
-                <input type="text" id="input-nums" class="ios-input-custom" placeholder="Ví dụ: 05 12 24 36 41 55">
+                <label>6 Số trúng giải Jackpot</label>
+                <div class="num-input-group">
+                    <input type="tel" class="ios-num-box" maxlength="2" placeholder="--">
+                    <input type="tel" class="ios-num-box" maxlength="2" placeholder="--">
+                    <input type="tel" class="ios-num-box" maxlength="2" placeholder="--">
+                    <input type="tel" class="ios-num-box" maxlength="2" placeholder="--">
+                    <input type="tel" class="ios-num-box" maxlength="2" placeholder="--">
+                    <input type="tel" class="ios-num-box" maxlength="2" placeholder="--">
+                </div>
             </div>
+
             <div class="input-item">
                 <label>Số Power</label>
-                <input type="number" id="input-pwr" class="ios-input-custom" placeholder="00">
+                <input type="tel" id="input-pwr" class="ios-input-custom" maxlength="2" placeholder="00" style="width: 60px; text-align: center;">
             </div>
-            <button id="save-manual-btn" class="ios-btn-action">LƯU & CẬP NHẬT NGAY</button>
+            
+            <button id="save-manual-btn" class="ios-btn-action">CẬP NHẬT KẾT QUẢ</button>
         </section>
     </main>
 
@@ -68,7 +78,7 @@
             <div class="sheet-handle"></div>
             <h3 class="sheet-title">Chọn Chiến Thuật</h3>
             <ul id="strategy-options"></ul>
-            <button class="sheet-close" onclick="closeModal()">Hủy bỏ</button>
+            <button class="sheet-close" onclick="closeModal()">Đóng</button>
         </div>
     </div>
 
