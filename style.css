@@ -1,45 +1,97 @@
-/* Nút số cơ bản */
-.num-btn { 
-    height: 48px; 
-    position: relative;
-    border-radius: 10px; 
-    font-weight: 800; 
-    font-size: 14px; 
-    background-color: #1f2937; 
-    border: 1px solid #374151; 
-    color: white;
+:root {
+    --ios-bg: #000000;
+    --ios-card: #1c1c1e;
+    --ios-text: #ffffff;
+    --ruby: #ff3b30; /* iOS Red */
+    --sapphire: #007aff; /* iOS Blue */
+    --topaz: #ffcc00; /* iOS Yellow */
+    --diamond: #af52de; /* iOS Purple */
+    --emerald: #34c759; /* iOS Green */
+}
+
+body {
+    background-color: var(--ios-bg);
+    color: var(--ios-text);
+    font-family: -apple-system, system-ui, sans-serif;
+    margin: 0;
+    padding-top: env(safe-area-inset-top);
+    user-select: none;
+}
+
+/* Hiệu ứng kính mờ (Glassmorphism) cho Header */
+.ios-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    height: 120px;
+    display: flex;
+    align-items: flex-end;
+    padding: 20px;
+}
+
+.blur-bg {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(28, 28, 30, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+/* Widget Card Style */
+.ios-widget {
+    background: var(--ios-card);
+    margin: 15px;
+    padding: 20px;
+    border-radius: 28px; /* Bo góc cực lớn kiểu iOS 18 */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.num-cell {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%; /* Ô số tròn trịa */
+    background: #2c2c2e;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Icon ghim nhỏ nằm góc trên */
-.pin-icon {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    font-size: 8px;
-    opacity: 0.3;
+/* Hiệu ứng khi chọn số */
+.num-cell.active {
+    background: #ffffff;
+    color: #000;
+    transform: scale(1.1);
 }
 
-/* Trạng thái khi đã Ghim */
-.is-pinned {
-    border: 2px solid white !important;
-    background-color: #374151 !important;
-}
-.is-pinned .pin-icon {
-    opacity: 1;
-    color: #f59e0b;
-}
-
-/* Trạng thái Tắt số */
-.num-disabled { 
-    background-color: #ef4444 !important; 
-    opacity: 0.2; 
-    text-decoration: line-through; 
-    border: none; 
+/* Nút bấm chính kiểu Apple */
+.ios-main-btn {
+    width: 80%;
+    height: 60px;
+    background: #ffffff;
+    color: #000;
+    border: none;
+    border-radius: 30px;
+    font-size: 18px;
+    font-weight: 700;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 10px;
 }
 
-/* Màu sắc Hot/Cold */
-.num-hot { color: #f59e0b; }
-.num-cold { color: #3b82f6; }
+.ios-main-btn:active {
+    transform: scale(0.95);
+}
+
+/* Kết quả Gem Badge */
+.gem-card {
+    background: var(--ios-card);
+    margin: 10px 15px;
+    padding: 15px;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
