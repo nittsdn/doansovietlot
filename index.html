@@ -2,52 +2,50 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vietlott Pro V3 - Smart System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Vietlott Pro V3</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
-<body class="bg-gray-900 text-white font-sans p-4">
-    <div class="max-w-md mx-auto">
-        <header class="text-center mb-4">
-            <h1 class="text-2xl font-black text-blue-500 tracking-tighter">VIETLOTT PRO V3</h1>
-            <div id="status" class="text-[10px] text-yellow-500 mt-1 uppercase tracking-widest italic">⏳ Đang khởi tạo hệ thống...</div>
-        </header>
-
-        <div class="flex justify-between items-center mb-4 gap-2">
-            <button onclick="updateManual()" class="flex-1 text-[10px] bg-blue-900 border border-blue-700 px-3 py-2 rounded-lg font-bold hover:bg-blue-800 active:scale-95 transition">
-                ✍️ NHẬP TAY
-            </button>
-            <button onclick="fetchOnlineResults()" class="flex-1 text-[10px] bg-gray-800 border border-gray-700 px-3 py-2 rounded-lg hover:bg-gray-700 active:scale-95 transition">
-                🔄 QUÉT WEB
-            </button>
-            <div id="statInfo" class="text-[9px] text-gray-500 italic font-mono min-w-[50px] text-right">0 kỳ</div>
-        </div>
-
-        <div class="grid grid-cols-7 gap-1.5 mb-6" id="numberMap"></div>
-
-        <div class="bg-gray-800 p-4 rounded-2xl shadow-2xl border border-gray-700">
-            <button onclick="generateFinalTickets()" class="w-full bg-gradient-to-r from-blue-600 to-blue-800 py-4 rounded-xl font-black text-xl shadow-lg active:scale-95 transition mb-4">
-                🎯 SINH SỐ CHIẾN THUẬT
-            </button>
-
-            <div id="results" class="hidden">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-tighter">5 Bộ số Gợi ý (Vùng Xanh)</h2>
-                    <button onclick="copyAll()" class="text-[10px] text-blue-400 underline">Copy Tất Cả</button>
-                </div>
-                <div id="ticketList" class="space-y-2"></div>
+<body>
+    <header class="ios-header">
+        <div class="blur-bg"></div>
+        <div class="header-content">
+            <div class="draw-info">
+                <h1 id="last-draw-id">#1284</h1>
+                <p id="last-draw-date">24/12/2025</p>
             </div>
+            <div class="last-result-pills" id="last-result-numbers">
+                </div>
+            <button id="sync-btn" class="ios-btn-icon">🔄</button>
         </div>
+    </header>
 
-        <footer class="mt-6 text-[9px] text-gray-600 text-center leading-relaxed">
-            Mẹo: Chạm để Tắt số | Giữ lâu để Ghim 📌<br>
-            Hệ thống ưu tiên nạp dữ liệu từ <strong>data.csv</strong> để tối ưu tốc độ.
-        </footer>
-    </div>
+    <main class="ios-container">
+        <section class="ios-widget">
+            <div class="widget-header">BẢN ĐỒ NHIỆT (HEATMAP)</div>
+            <div id="number-grid" class="grid-55"></div>
+            <div class="map-legend">
+                <span class="legend-item"><i class="ruby-dot"></i> Hot</span>
+                <span class="legend-item"><i class="sapphire-dot"></i> Lạnh</span>
+                <span class="legend-item"><i class="gold-ring"></i> Repeat</span>
+                <span class="legend-item"><i class="power-bolt"></i> ⚡ Power</span>
+            </div>
+        </section>
 
-    <script src="data_handler.js"></script>
+        <section class="action-center">
+            <button id="generate-btn" class="ios-main-btn" disabled>
+                <span>KÍCH HOẠT V3</span>
+                <div class="glow"></div>
+            </button>
+            <p id="warning-text">Chọn tối thiểu 12 số</p>
+        </section>
+
+        <section id="results-container" class="ios-list">
+            </section>
+    </main>
+
     <script src="engine.js"></script>
 </body>
 </html>
