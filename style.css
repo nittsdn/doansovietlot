@@ -11,6 +11,7 @@ body { background: var(--bg-light); color: var(--text-main); font-family: -apple
 .header-content { display: flex; justify-content: space-between; align-items: center; }
 .draw-info h1 { font-size: 22px; color: var(--ios-blue); margin: 0; }
 .draw-info p { font-size: 11px; color: #8e8e93; margin: 0; }
+
 .last-result-pills { display: flex; gap: 4px; }
 .pill { background: #e5e5ea; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: bold; }
 .pill.pwr { background: #f5d3f5; color: #af52de; border: 1px solid #af52de; }
@@ -24,19 +25,22 @@ body { background: var(--bg-light); color: var(--text-main); font-family: -apple
 .num-cell.power { border-color: var(--diamond); box-shadow: 0 0 5px var(--diamond); }
 
 .ios-main-btn { width: 85%; height: 55px; background: var(--ios-blue); color: white; border: none; border-radius: 18px; font-size: 17px; font-weight: 600; margin: 20px 0; box-shadow: 0 4px 15px rgba(0,122,255,0.3); }
-.ios-main-btn:active { opacity: 0.7; transform: scale(0.98); }
+.ios-main-btn:disabled { background: #d1d1d6; color: #8e8e93; box-shadow: none; }
 
 .gem-card { background: white; margin: 10px 15px; padding: 15px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-.gem-badge { padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 4px; }
+.gem-badge { padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; color: #fff; text-align: center; min-width: 80px; }
 .ruby { background: var(--ruby); } .sapphire { background: var(--sapphire); }
-.topaz { background: var(--topaz); color: #444; } .diamond { background: var(--diamond); }
-.emerald { background: var(--emerald); color: #444; }
+.topaz { background: var(--topaz); color: #444; } .diamond { background: var(--diamond); } .emerald { background: var(--emerald); color: #444; }
 
-.res-nums { font-family: monospace; font-size: 19px; font-weight: bold; letter-spacing: 1px; color: #333; }
+.res-nums { font-family: monospace; font-size: 19px; font-weight: bold; letter-spacing: 1px; }
 
-/* iOS Sheet */
+/* Modal & Manual Input */
 .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2000; }
 .ios-sheet { position: absolute; bottom: 0; width: 100%; background: #fff; border-radius: 25px 25px 0 0; padding: 20px; box-sizing: border-box; }
-.handle { width: 40px; height: 5px; background: #e5e5ea; border-radius: 3px; margin: 0 auto 15px; }
 .strategy-opt { padding: 15px; border-bottom: 0.5px solid #eee; font-weight: 600; list-style: none; text-align: center; color: var(--ios-blue); }
 .close-btn { width: 100%; padding: 15px; border: none; background: #f2f2f7; border-radius: 15px; margin-top: 10px; font-weight: bold; color: #ff3b30; }
+
+.manual-update { margin-top: 30px; border: 1px dashed var(--ios-blue); }
+.input-group { margin-bottom: 12px; display: flex; flex-direction: column; }
+.ios-input { background: #f2f2f7; border: none; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 600; outline: none; }
+.ios-btn-save { width: 100%; padding: 15px; border: none; border-radius: 15px; background: var(--emerald); color: #000; font-weight: 700; margin-top: 10px; }
