@@ -9,8 +9,8 @@
 
 body {
     background: var(--bg-ios); color: var(--text-dark);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    margin: 0; padding-bottom: 40px; user-select: none;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0; padding-bottom: 50px; user-select: none;
 }
 
 .ios-header {
@@ -27,44 +27,50 @@ body {
 .pill.pwr { background: #f5d3f5; color: #af52de; border: 1px solid #af52de; }
 
 .ios-widget { background: var(--card-white); margin: 12px; padding: 16px; border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-.widget-header { font-size: 11px; font-weight: 700; color: #8e8e93; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.widget-header { font-size: 11px; font-weight: 700; color: #8e8e93; margin-bottom: 12px; text-transform: uppercase; }
 
 .grid-55 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .num-cell {
     aspect-ratio: 1; border-radius: 10px; background: #e5e5ea;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 600; color: #a1a1a1; transition: 0.2s;
+    font-size: 14px; font-weight: 600; color: #a1a1a1; transition: 0.15s;
 }
 .num-cell.active { background: #ffffff; color: var(--text-dark); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 .num-cell.active.hot { background: #fce4ec; color: #d81b60; }
-.num-cell.repeat { border: 2px solid var(--topaz); }
-.num-cell.power { border: 2px solid var(--diamond); box-shadow: 0 0 5px var(--diamond); }
+.num-cell.repeat { border: 2.5px solid var(--topaz); }
+.num-cell.power { border: 2.5px solid var(--diamond); box-shadow: 0 0 5px var(--diamond); }
 
 .ios-main-btn {
-    width: 90%; height: 52px; background: var(--ios-blue); color: #fff;
-    border: none; border-radius: 14px; font-size: 17px; font-weight: 600;
-    margin: 10px auto; display: block;
+    width: 90%; height: 54px; background: var(--ios-blue); color: #fff;
+    border: none; border-radius: 16px; font-size: 17px; font-weight: 600;
+    margin: 10px auto; display: block; box-shadow: 0 4px 12px rgba(0,122,255,0.3);
 }
-.ios-main-btn:disabled { background: #d1d1d6; color: #8e8e93; }
 
 .gem-card { background: #fff; margin: 8px 12px; padding: 14px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; }
 .gem-badge { padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; color: #fff; min-width: 85px; text-align: center; }
 .ruby { background: var(--ruby); } .sapphire { background: var(--sapphire); }
 .topaz { background: var(--topaz); color: #444; } .diamond { background: var(--diamond); } .emerald { background: var(--emerald); color: #444; }
 
-/* Manual Input UI */
-.card-manual { border: 1px dashed #d1d1d6; }
-.form-row { display: flex; gap: 10px; margin-bottom: 10px; }
-.input-item { flex: 1; display: flex; flex-direction: column; margin-bottom: 10px; }
-.input-item label { font-size: 11px; font-weight: 600; color: #8e8e93; margin-bottom: 4px; padding-left: 4px; }
-.ios-input-custom, .ios-select-custom {
-    background: #f2f2f7; border: none; padding: 10px; border-radius: 10px;
-    font-size: 15px; font-weight: 600; outline: none; -webkit-appearance: none;
-}
-.ios-btn-action { width: 100%; padding: 14px; border-radius: 12px; border: none; background: #34c759; color: #fff; font-weight: 700; font-size: 15px; margin-top: 5px; }
+/* Manual Form Styling */
+.card-manual { border: 1px dashed var(--ios-blue); background: #f9f9fb; }
+.form-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.input-item { flex: 1; display: flex; flex-direction: column; margin-bottom: 12px; }
+.input-item label { font-size: 11px; font-weight: 600; color: #8e8e93; margin-bottom: 5px; }
 
-/* Modal Sheet */
+.num-input-group { display: flex; justify-content: space-between; gap: 4px; }
+.ios-num-box {
+    width: 42px; height: 42px; background: #fff; border: 1px solid #d1d1d6;
+    border-radius: 10px; text-align: center; font-size: 18px; font-weight: 700;
+    color: var(--ios-blue); outline: none; -webkit-appearance: none;
+}
+.ios-input-custom, .ios-select-custom {
+    background: #fff; border: 1px solid #d1d1d6; padding: 10px; border-radius: 10px;
+    font-size: 16px; font-weight: 600; outline: none; -webkit-appearance: none;
+}
+.ios-btn-action { width: 100%; padding: 15px; border-radius: 14px; border: none; background: #34c759; color: #fff; font-weight: 700; font-size: 16px; }
+
+/* Modal */
 .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2000; }
 .ios-sheet { position: absolute; bottom: 0; width: 100%; background: #fff; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; }
 .sheet-handle { width: 36px; height: 5px; background: #d1d1d6; border-radius: 3px; margin: 0 auto 15px; }
-.strategy-opt { padding: 16px; border-bottom: 0.5px solid #f2f2f7; list-style: none; text-align: center; font-weight: 600; color: var(--ios-blue); }
+.strategy-opt { padding: 18px; border-bottom: 0.5px solid #f2f2f7; list-style: none; text-align: center; font-weight: 600; color: var(--ios-blue); }
