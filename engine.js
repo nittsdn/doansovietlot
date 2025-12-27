@@ -1,8 +1,7 @@
-/* * VIETLOTT PRO V5.3 - CLEAN CORE
- * Fix: Data Migration to 'vietlott_pro_v5_storage' to prevent crash
+/* * VIETLOTT PRO V5.4 - FINAL ENGINE
+ * Update: No logic change, visual tweaks only in CSS
  */
 
-// --- CẤU HÌNH ---
 let db = [], stats = { hot: [], cold: [], gap: [] };
 let historyDataStrings = []; 
 let disabledNumbers = [];
@@ -24,7 +23,6 @@ const GEMS = {
     EMERALD: { id: 'EMERALD', name: "EMERALD", icon: ICONS.EMERALD, color: "gem-emerald" }
 };
 
-// STORAGE KEY MỚI -> TRÁNH XUNG ĐỘT
 const STORAGE_KEY = 'vietlott_pro_v5_storage';
 
 async function loadData() {
@@ -43,7 +41,6 @@ async function loadData() {
             return { id: p[0], nums: nums, pwr: Number(p[2]), date: p[3] };
         }).filter(item => item !== null).reverse(); 
 
-        // Load từ kho mới
         try {
             const localData = localStorage.getItem(STORAGE_KEY);
             if (localData) {
@@ -352,7 +349,6 @@ if(saveBtn) {
         if (nums.some(isNaN) || isNaN(pwr)) { alert("Vui lòng nhập đủ số!"); return; }
         let d = new Date(); 
         const entry = { id: (parseInt(db[0].id) + 1).toString(), nums: nums.sort((a,b)=>a-b), pwr: pwr, date: `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}` };
-        // LƯU VÀO KEY MỚI
         localStorage.setItem(STORAGE_KEY, JSON.stringify(entry));
         alert(`Đã lưu Kỳ ${entry.id}!`); location.reload(); 
     };
