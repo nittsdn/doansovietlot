@@ -3,8 +3,8 @@
  */
 
 // --- CẤU HÌNH & BIẾN TOÀN CỤC ---
-let db = [], stats = { hot: [], cold: [], gap: {} };
-let historyDataStrings = []; // Dùng để check trùng lịch sử nhanh
+let db = [], stats = { hot: [], cold: [], gap: [] };
+let historyDataStrings = []; // Cache chuỗi lịch sử để check nhanh
 
 const GEMS = {
     RUBY: { id: 'RUBY', name: "Trend", icon: "🔥", desc: "Bắt số Nóng (Top 2-15)", color: "gem-ruby" },
@@ -20,7 +20,7 @@ async function loadData() {
     updateStatus("Đang tải dữ liệu...", true);
     try {
         // 1. Load CSV từ GitHub
-        const response = await fetch('data.csv?v=' + Date.now());
+        const response = await fetch('data.csv?v=' + Date.now()); // Thêm timestamp để tránh cache
         if (!response.ok) throw new Error("Lỗi tải data.csv");
         const text = await response.text();
         const lines = text.trim().split(/\r?\n/);
@@ -37,16 +37,16 @@ async function loadData() {
             };
         }).filter(item => item && item.nums.length === 6).reverse(); // Mới nhất lên đầu
 
-        // 2. Load LocalStorage (Dữ liệu nhập tay)
+        // 2. Load LocalStorage (Dữ liệu nhập tay) - Ưu tiên hiển thị
         const localData = localStorage.getItem('manual_update_v4');
         if (localData) {
             const manualEntry = JSON.parse(localData);
-            // Nếu ID nhập tay > ID mới nhất trong CSV thì chèn vào đầu
-            if (parseInt(manualEntry.id) > parseInt(db[0].id)) {
+            // Nếu ID nhập tay lớn hơn ID trong CSV thì chèn vào đầu
+            if (db.length === 0 || parseInt(manualEntry.id) > parseInt(db[0].id)) {
                 db.unshift(manualEntry);
                 console.log("Đã chèn dữ liệu nhập tay:", manualEntry);
             } else {
-                // Nếu CSV đã cập nhật bằng hoặc hơn thì xóa LocalStorage
+                // Nếu CSV đã cập nhật bằng hoặc hơn thì xóa LocalStorage để dùng data gốc
                 localStorage.removeItem('manual_update_v4');
             }
         }
@@ -55,8 +55,8 @@ async function loadData() {
         analyzeData();
         renderHeaderInfo();
         renderMap();
-        initSmartPaste(); // Kích hoạt tính năng Paste
-        updateStatus(`Sẵn sàng (Kỳ ${db[0].id})`, false);
+        initSmartPaste(); // Kích hoạt tính năng Paste thông minh
+        updateStatus(`Sẵn sàng (Kỳ ${db[0]?.id || '??'})`, false);
 
     } catch (e) {
         console.error(e);
@@ -65,10 +65,12 @@ async function loadData() {
 }
 
 function analyzeData() {
+    if (db.length === 0) return;
+
     // Reset stats
     let freq = Array(56).fill(0);
     let lastSeen = Array(56).fill(-1);
-    historyDataStrings = db.map(d => d.nums.join(',')); // Cache lịch sử check trùng
+    historyDataStrings = db.map(d => d.nums.join(',')); 
 
     // Tính tần suất 50 kỳ gần nhất
     const recent = db.slice(0, 50);
@@ -77,17 +79,20 @@ function analyzeData() {
     });
 
     // Tính Gap (Số kỳ chưa về)
-    db.forEach((draw, idx) => {
-        draw.nums.forEach(n => {
-            if (lastSeen[n] === -1) lastSeen[n] = idx;
-        });
-    });
+    // Duyệt ngược từ quá khứ đến hiện tại để tính chính xác
+    // Cách đơn giản: Duyệt toàn bộ db, nếu gặp số thì reset gap về 0, ko gặp thì gap++
+    // Nhưng cách tối ưu hơn: Duyệt từ kỳ mới nhất về sau
+    for (let i = 1; i <= 55; i++) {
+        const idx = db.findIndex(d => d.nums.includes(i));
+        lastSeen[i] = (idx === -1) ? 999 : idx; // idx chính là số kỳ chưa về (vì db[0] là mới nhất)
+    }
 
     // Phân loại
     let sortedFreq = [];
     for(let i=1; i<=55; i++) {
         sortedFreq.push({ n: i, f: freq[i], gap: lastSeen[i] });
     }
+    // Sắp xếp theo tần suất giảm dần
     sortedFreq.sort((a,b) => b.f - a.f);
 
     stats.hot = sortedFreq.slice(1, 15).map(x => x.n); // Top 2-15 (Bỏ Top 1)
@@ -140,8 +145,7 @@ function isRedZone(ticket) {
     if (maxDecade >= 5) return "Lỗi Hàng Chục";
 
     // 7. Cấp số cộng (Arithmetic Progression)
-    // Kiểm tra đơn giản 3 số cách đều nhau liên tiếp thì ok, nhưng cả bộ cách đều thì loại
-    // Ở đây check 6 số cách đều
+    // Kiểm tra nếu cả 6 số tạo thành cấp số cộng
     let diff = t[1] - t[0];
     let isArith = true;
     for(let i=1; i<5; i++) {
@@ -157,10 +161,10 @@ function isRedZone(ticket) {
     // 9. Độ rộng (Range) < 18
     if (t[5] - t[0] < 18) return "Range Quá Nhỏ";
 
-    // 10. Bước nhảy (Gap) > 30 hoặc < 10 (Chỉ cảnh báo logic, ở đây làm mềm hơn chút là 35)
+    // 10. Bước nhảy (Gap) > 30 (Nới lỏng lên 35 cho an toàn)
     let maxGap = 0;
     for(let i=0; i<5; i++) if(t[i+1] - t[i] > maxGap) maxGap = t[i+1] - t[i];
-    if (maxGap > 30) return "Gap Quá Lớn";
+    if (maxGap > 35) return "Gap Quá Lớn";
 
     return "OK"; // Vượt qua Vùng Đỏ
 }
@@ -168,15 +172,11 @@ function isRedZone(ticket) {
 // --- PHẦN 3: CÁC CHIẾN THUẬT (GENERATORS) ---
 
 function getPool(strategy) {
-    let pool = [];
     const full = Array.from({length: 55}, (_, i) => i + 1);
     
-    // Lấy danh sách số đang BỊ TẮT trên Map (người dùng loại)
-    const disabled = []; // Cần implement nếu muốn tính năng loại số thủ công
-    
     switch(strategy) {
-        case 'RUBY': return stats.hot;
-        case 'SAPPHIRE': return stats.cold;
+        case 'RUBY': return stats.hot.length > 5 ? stats.hot : full;
+        case 'SAPPHIRE': return stats.cold.length > 5 ? stats.cold : full;
         default: return full;
     }
 }
@@ -185,48 +185,79 @@ function generateTicket(gemType) {
     let ticket = [];
     let attempts = 0;
     
-    while (attempts < 500) {
+    while (attempts < 1000) {
         attempts++;
         ticket = [];
         let pool = getPool(gemType);
         
         // LOGIC RIÊNG TỪNG LOẠI
-        if (gemType === 'DIAMOND') {
-            // Lấy 1 số từ kỳ trước
+        if (gemType === 'DIAMOND' && db.length > 0) {
+            // Remix: 1 số kỳ trước + Power kỳ trước (nếu valid) + Random
             const lastDraw = db[0].nums;
+            const pwr = db[0].pwr;
+            
+            // 1. Lấy 1 số ngẫu nhiên từ kỳ trước
             ticket.push(lastDraw[Math.floor(Math.random() * lastDraw.length)]);
             
-            // Lấy số Power kỳ trước nếu < 55 và chưa có trong vé
-            if (db[0].pwr <= 55 && !ticket.includes(db[0].pwr)) {
-                ticket.push(db[0].pwr);
+            // 2. Lấy số Power nếu nó nằm trong khoảng 1-55 và chưa trùng
+            if (pwr <= 55 && !ticket.includes(pwr)) {
+                ticket.push(pwr);
             }
-            // Điền nốt ngẫu nhiên từ pool full
+            
+            // Reset pool về full để điền nốt
             pool = Array.from({length: 55}, (_, i) => i + 1);
         } else if (gemType === 'TOPAZ') {
-            // Tỷ lệ vàng: Ưu tiên tổng 130-190
+            // Tỷ lệ vàng: Ưu tiên tổng 130-190 ngay từ đầu thì khó, nên cứ random rồi lọc sau
             pool = Array.from({length: 55}, (_, i) => i + 1);
         }
         
         // Điền đầy vé
         while(ticket.length < 6) {
+            // Nếu pool rỗng (do filter quá đà), reset về full
             if (pool.length === 0) pool = Array.from({length: 55}, (_, i) => i + 1);
+            
             const rand = pool[Math.floor(Math.random() * pool.length)];
-            if (!ticket.includes(rand)) ticket.push(rand);
+            if (!ticket.includes(rand)) {
+                ticket.push(rand);
+                // Loại số vừa chọn khỏi pool để tránh lặp vô hạn trong while này
+                // (Thực ra check includes là đủ, nhưng logic pool giúp clean hơn)
+            }
         }
 
         // KIỂM TRA RED ZONE
         if (isRedZone(ticket) === "OK") {
-            // Kiểm tra thêm điều kiện phụ cho TOPAZ
+            // Kiểm tra thêm điều kiện phụ cho TOPAZ (Gold Ratio)
             if (gemType === 'TOPAZ') {
                 const sum = ticket.reduce((a,b)=>a+b,0);
                 if (sum < 130 || sum > 190) continue;
+                
+                const even = ticket.filter(n => n%2===0).length;
+                // Chấp nhận 3:3, 2:4, 4:2
+                if (![2,3,4].includes(even)) continue;
             }
+            
             return ticket.sort((a,b)=>a-b);
         }
     }
     
-    // Fallback: Nếu không tìm được vé đẹp, lấy vé Safe (Emerald)
-    return generateTicket('EMERALD'); 
+    // Fallback: Nếu không tìm được vé đẹp, trả về vé Random nhưng sạch Vùng Đỏ (Emerald)
+    // Để tránh đệ quy vô hạn, ta gọi hàm sinh cơ bản
+    return generateBasicSafeTicket(); 
+}
+
+function generateBasicSafeTicket() {
+    let t = [];
+    let safeAttempts = 0;
+    while(safeAttempts < 500) {
+        t = [];
+        while(t.length < 6) {
+            let r = Math.floor(Math.random()*55)+1;
+            if(!t.includes(r)) t.push(r);
+        }
+        if(isRedZone(t) === "OK") return t.sort((a,b)=>a-b);
+        safeAttempts++;
+    }
+    return t.sort((a,b)=>a-b); // Bần cùng bất đắc dĩ mới trả về vé chưa sạch
 }
 
 // --- PHẦN 4: GIAO DIỆN & TƯƠNG TÁC (UI/UX) ---
@@ -239,35 +270,41 @@ function renderHeaderInfo() {
     
     // Render 6 số + Power header
     const container = document.getElementById('last-result-numbers');
-    container.innerHTML = '';
-    latest.nums.forEach(n => {
-        const sp = document.createElement('span');
-        sp.className = 'res-ball-mini'; // CSS class nhỏ
-        sp.innerText = n;
-        container.appendChild(sp);
-    });
-    // Power
-    const pwr = document.createElement('span');
-    pwr.className = 'res-ball-mini is-power';
-    pwr.innerText = latest.pwr;
-    container.appendChild(pwr);
+    if(container) {
+        container.innerHTML = '';
+        latest.nums.forEach(n => {
+            const sp = document.createElement('span');
+            sp.className = 'res-ball-mini'; 
+            sp.innerText = n;
+            container.appendChild(sp);
+        });
+        // Power
+        const pwr = document.createElement('span');
+        pwr.className = 'res-ball-mini is-power';
+        pwr.innerText = latest.pwr;
+        container.appendChild(pwr);
+    }
 }
 
 function renderMap() {
     const grid = document.getElementById('number-grid');
+    if (!grid) return;
     grid.innerHTML = '';
     
-    // Lấy 6 số kỳ trước để highlight
-    const lastNums = db[0].nums;
+    const lastNums = db.length ? db[0].nums : [];
     
     for (let i = 1; i <= 55; i++) {
         const div = document.createElement('div');
         div.className = 'num-cell';
         div.innerText = i;
         
+        // Logic màu sắc
         if (lastNums.includes(i)) div.classList.add('is-last-draw');
-        if (stats.hot.includes(i)) div.classList.add('is-hot');
-        if (stats.cold.includes(i)) div.classList.add('is-cold');
+        else if (stats.hot.includes(i)) div.classList.add('is-hot');
+        else if (stats.cold.includes(i)) div.classList.add('is-cold');
+        
+        // Thêm sự kiện click (nếu muốn toggle bật tắt số - v4.5 tạm ẩn)
+        // div.onclick = () => toggleNumber(i);
         
         grid.appendChild(div);
     }
@@ -278,34 +315,39 @@ function initSmartPaste() {
     const inputs = document.querySelectorAll('.ios-num-box');
     if(inputs.length === 0) return;
 
+    // Lắng nghe sự kiện paste ở ô đầu tiên
     inputs[0].addEventListener('paste', (e) => {
         e.preventDefault();
         // Lấy dữ liệu clipboard
         const pasteData = (e.clipboardData || window.clipboardData).getData('text');
-        // Tìm tất cả các số trong chuỗi (tách bằng space, tab, phẩy...)
+        // Tìm tất cả các con số
         const numbers = pasteData.match(/\d+/g);
 
         if (numbers && numbers.length > 0) {
-            // Điền vào các ô 6 số chính
+            // Điền vào 6 ô chính
             for (let i = 0; i < 6 && i < numbers.length; i++) {
-                inputs[i].value = numbers[i].padStart(2, '0');
+                inputs[i].value = numbers[i].toString().padStart(2, '0');
             }
-            // Nếu có số thứ 7, điền vào ô Power
+            // Nếu có số thứ 7 (Power), điền vào ô Power
             if (numbers.length >= 7) {
-                document.getElementById('input-pwr').value = numbers[6].padStart(2, '0');
+                const pwrInput = document.getElementById('input-pwr');
+                if(pwrInput) pwrInput.value = numbers[6].toString().padStart(2, '0');
             }
             
-            // Focus vào nút lưu để tiện bấm
+            // Focus vào nút Lưu
             document.getElementById('save-manual-btn').focus();
         }
     });
 
-    // Auto-jump (nhảy ô khi nhập đủ 2 số)
+    // Auto-jump: Nhảy sang ô tiếp theo khi nhập đủ 2 số
     inputs.forEach((input, idx) => {
         input.addEventListener('input', () => {
             if (input.value.length >= 2) {
                 if (idx < 5) inputs[idx+1].focus();
-                else document.getElementById('input-pwr').focus();
+                else {
+                    const pwrInput = document.getElementById('input-pwr');
+                    if(pwrInput) pwrInput.focus();
+                }
             }
         });
     });
@@ -313,58 +355,75 @@ function initSmartPaste() {
 
 // --- HÀM CHÍNH: SINH SỐ & HIỂN THỊ ---
 function generateFinalTickets() {
+    if (db.length === 0) {
+        alert("Chưa có dữ liệu! Vui lòng đợi tải hoặc nhập tay.");
+        return;
+    }
+
     const list = document.getElementById('ticketList');
+    if(!list) return;
+    
     list.innerHTML = '';
     document.getElementById('results').classList.remove('hidden');
 
     const strategies = ['RUBY', 'SAPPHIRE', 'TOPAZ', 'DIAMOND', 'EMERALD'];
     
-    strategies.forEach(stratKey => {
-        const ticket = generateTicket(stratKey);
-        const gem = GEMS[stratKey];
-        
-        // Tạo HTML cho dòng kết quả
-        const row = document.createElement('div');
-        row.className = 'result-row animate-pop';
-        
-        // Nhãn Đá Quý
-        const label = document.createElement('div');
-        label.className = `gem-label ${gem.color}`;
-        label.innerHTML = `<div class="gem-icon">${gem.icon}</div><div>${gem.name}</div>`;
-        
-        // Bộ số (Balls)
-        const numsDiv = document.createElement('div');
-        numsDiv.className = 'nums-display';
-        ticket.forEach(n => {
-            const ball = document.createElement('div');
-            ball.className = 'res-ball';
-            ball.innerText = n.toString().padStart(2,'0');
-            numsDiv.appendChild(ball);
-        });
+    strategies.forEach((stratKey, idx) => {
+        // Tạo hiệu ứng delay nhỏ cho từng dòng hiện ra (optional)
+        setTimeout(() => {
+            const ticket = generateTicket(stratKey);
+            const gem = GEMS[stratKey];
+            
+            // Tạo HTML cho dòng kết quả
+            const row = document.createElement('div');
+            row.className = 'result-row animate-pop';
+            
+            // Nhãn Đá Quý
+            const label = document.createElement('div');
+            label.className = `gem-label ${gem.color}`;
+            label.innerHTML = `<div class="gem-icon">${gem.icon}</div><div>${gem.name}</div>`;
+            
+            // Bộ số (Balls)
+            const numsDiv = document.createElement('div');
+            numsDiv.className = 'nums-display';
+            ticket.forEach(n => {
+                const ball = document.createElement('div');
+                ball.className = 'res-ball';
+                ball.innerText = n.toString().padStart(2,'0');
+                numsDiv.appendChild(ball);
+            });
 
-        // Nút Copy
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'btn-copy-line';
-        copyBtn.innerHTML = '📋';
-        copyBtn.onclick = () => copyLine(ticket.join(' '));
+            // Nút Copy
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'btn-copy-line';
+            copyBtn.innerHTML = '📋'; // Hoặc icon SVG
+            copyBtn.onclick = () => copyLine(ticket.join(' '));
 
-        row.appendChild(label);
-        row.appendChild(numsDiv);
-        row.appendChild(copyBtn);
-        list.appendChild(row);
+            row.appendChild(label);
+            row.appendChild(numsDiv);
+            row.appendChild(copyBtn);
+            list.appendChild(row);
+        }, idx * 100);
     });
 }
 
 // --- UTILS ---
 function updateStatus(msg, isLoading) {
-    const el = document.getElementById('status');
-    if (el) el.innerText = msg;
+    const el = document.getElementById('last-draw-date'); // Tận dụng chỗ hiển thị ngày để báo status
+    if (el && isLoading) el.innerText = msg;
 }
 
 function copyLine(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        alert("Đã copy: " + text);
-    });
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            // Hiệu ứng Toast đơn giản hoặc alert
+            // alert("Đã copy: " + text); 
+            // Có thể làm nút đổi màu để báo success
+        });
+    } else {
+        // Fallback cho trình duyệt cũ
+        alert("Copy: " + text);
+    }
 }
 
 function copyAll() {
@@ -377,40 +436,44 @@ function copyAll() {
 }
 
 // --- XỬ LÝ LƯU THỦ CÔNG ---
-document.getElementById('save-manual-btn').onclick = () => {
-    // 1. Lấy dữ liệu từ input
-    const inputs = document.querySelectorAll('.ios-num-box');
-    const nums = Array.from(inputs).map(i => parseInt(i.value));
-    const pwr = parseInt(document.getElementById('input-pwr').value);
-    
-    // Validate
-    if (nums.some(isNaN) || isNaN(pwr)) {
-        alert("Vui lòng nhập đủ số!");
-        return;
-    }
+const saveBtn = document.getElementById('save-manual-btn');
+if(saveBtn) {
+    saveBtn.onclick = () => {
+        // 1. Lấy dữ liệu từ input
+        const inputs = document.querySelectorAll('.ios-num-box');
+        const nums = Array.from(inputs).map(i => parseInt(i.value));
+        const pwrInput = document.getElementById('input-pwr');
+        const pwr = pwrInput ? parseInt(pwrInput.value) : 0;
+        
+        // Validate
+        if (nums.some(isNaN) || isNaN(pwr)) {
+            alert("Vui lòng nhập đủ số!");
+            return;
+        }
 
-    // 2. Tính ngày tiếp theo (Thứ 3, 5, 7)
-    // Giả sử lấy ngày hôm nay làm mốc nếu không nhập ngày
-    let d = new Date(); 
-    // Logic tìm ngày T3, T5, T7 gần nhất tương lai... (Đơn giản hóa lấy ngày hiện tại)
-    const dateStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+        // 2. Tính ngày tiếp theo (Thứ 3, 5, 7)
+        let d = new Date(); 
+        const dateStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
 
-    // 3. Tạo object
-    const newId = (parseInt(db[0].id) + 1).toString();
-    const entry = {
-        id: newId,
-        nums: nums.sort((a,b)=>a-b),
-        pwr: pwr,
-        date: dateStr
+        // 3. Tạo object
+        const latestId = db.length > 0 ? parseInt(db[0].id) : 0;
+        const newId = (latestId + 1).toString();
+        
+        const entry = {
+            id: newId,
+            nums: nums.sort((a,b)=>a-b),
+            pwr: pwr,
+            date: dateStr
+        };
+
+        // 4. Lưu LocalStorage
+        localStorage.setItem('manual_update_v4', JSON.stringify(entry));
+        
+        // 5. Reload
+        alert(`Đã lưu Kỳ ${newId} vào bộ nhớ máy!`);
+        location.reload(); 
     };
-
-    // 4. Lưu LocalStorage
-    localStorage.setItem('manual_update_v4', JSON.stringify(entry));
-    
-    // 5. Reload
-    alert(`Đã lưu Kỳ ${newId} vào bộ nhớ tạm!`);
-    location.reload(); 
-};
+}
 
 // KHỞI CHẠY
-loadData();
+document.addEventListener('DOMContentLoaded', loadData);
