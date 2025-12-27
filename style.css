@@ -1,181 +1,52 @@
-/* --- VIETLOTT PRO V4.7 - IOS STYLE (FULL) --- */
-
+/* --- VIETLOTT PRO V4.8 - STABLE CSS --- */
 :root {
-    --bg-ios: #f2f2f7; 
-    --card-white: #ffffff; 
-    --ios-blue: #007aff;
-    --text-dark: #1c1c1e;
-    
-    /* Màu Đá Quý */
-    --ruby: #ff3b30;      /* Đỏ */
-    --sapphire: #5ac8fa;  /* Xanh dương nhạt */
-    --topaz: #ffcc00;     /* Vàng */
-    --diamond: #af52de;   /* Tím */
-    --emerald: #34c759;   /* Xanh lá */
+    --bg-ios: #f2f2f7; --card-white: #ffffff; --ios-blue: #007aff; --text-dark: #1c1c1e;
+    --ruby: #ff3b30; --sapphire: #5ac8fa; --topaz: #ffcc00; --diamond: #af52de; --emerald: #34c759;
 }
-
-body {
-    background: var(--bg-ios); 
-    color: var(--text-dark);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    margin: 0; 
-    padding-bottom: 50px; 
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-/* HEADER */
-.ios-header {
-    background: rgba(255, 255, 255, 0.85); 
-    backdrop-filter: blur(20px); 
-    -webkit-backdrop-filter: blur(20px);
-    position: sticky; top: 0; z-index: 1000; 
-    padding: 10px 15px; 
-    border-bottom: 0.5px solid #c6c6c8;
-}
+body { background: var(--bg-ios); color: var(--text-dark); font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding-bottom: 50px; user-select: none; -webkit-tap-highlight-color: transparent; }
+.ios-header { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 1000; padding: 10px 15px; border-bottom: 0.5px solid #c6c6c8; }
 .header-content { display: flex; justify-content: space-between; align-items: center; }
 .draw-info h1 { margin: 0; font-size: 18px; font-weight: 800; color: var(--ios-blue); }
 .draw-info p { margin: 0; font-size: 11px; color: #8e8e93; }
-
-/* KẾT QUẢ MINI TRÊN HEADER */
 .last-result-pills { display: flex; gap: 3px; }
-.res-ball-mini {
-    width: 20px; height: 20px;
-    background: #e5e5ea;
-    border-radius: 50%;
-    font-size: 10px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    color: #3a3a3c;
-}
+.res-ball-mini { width: 20px; height: 20px; background: #e5e5ea; border-radius: 50%; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: #3a3a3c; }
 .res-ball-mini.is-power { background: #ffcc00; color: #fff; }
-
-.ios-btn-icon {
-    background: none; border: none; font-size: 20px; cursor: pointer;
-}
-
-/* CONTAINER */
 .ios-container { padding: 15px; max-width: 600px; mx: auto; }
-.ios-widget {
-    background: var(--card-white);
-    border-radius: 16px;
-    padding: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-.widget-header {
-    font-size: 13px; font-weight: 600; color: #8e8e93;
-    text-transform: uppercase; margin-bottom: 10px;
-}
-
-/* MAP SỐ */
-.grid-55 {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
-}
-.num-cell {
-    aspect-ratio: 1;
-    background: #f2f2f7;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 600; color: #aeaeb2;
-}
-.num-cell.is-last-draw { 
-    border: 2px solid #ffcc00; 
-    color: #ff9500; font-weight: 800; 
-    background: #fff9c4;
-}
+.ios-widget { background: var(--card-white); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.widget-header { font-size: 13px; font-weight: 600; color: #8e8e93; text-transform: uppercase; margin-bottom: 10px; }
+.grid-55 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.num-cell { aspect-ratio: 1; background: #f2f2f7; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #aeaeb2; }
+.num-cell.is-last-draw { border: 2px solid #ffcc00; color: #ff9500; font-weight: 800; background: #fff9c4; }
 .num-cell.is-hot { background: #ffdbdb; color: #ff3b30; } 
 .num-cell.is-cold { background: #d0f0fd; color: #007aff; }
-
-/* GIẢI THÍCH MAP */
-.map-explanation {
-    display: flex; justify-content: space-around; margin-top: 10px;
-    font-size: 10px; color: #636366;
-}
+.map-explanation { display: flex; justify-content: space-around; margin-top: 10px; font-size: 10px; color: #636366; }
 .exp-item { display: flex; align-items: center; gap: 4px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 .dot.ruby { background: var(--ruby); }
 .dot.sapphire { background: var(--sapphire); }
 .dot.gold { background: var(--topaz); }
 
-/* --- PHẦN KẾT QUẢ GỢI Ý (VISUAL BALLS) --- */
 #results.hidden { display: none; }
-
-.result-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Đẩy các phần tử ra xa nhau */
-    background: #ffffff;
-    padding: 12px 10px;
-    border-radius: 16px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.05);
-}
+.result-row { display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 12px 10px; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05); }
 .animate-pop { animation: popIn 0.3s ease-out backwards; }
-@keyframes popIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-/* Nhãn Đá Quý bên trái */
-.gem-label {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 50px;
-    font-size: 9px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #555;
-    border-right: 1px solid #f2f2f7;
-    padding-right: 8px;
-    margin-right: 4px;
-    flex-shrink: 0;
-}
+@keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+.gem-label { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 50px; font-size: 9px; font-weight: 700; text-transform: uppercase; color: #555; border-right: 1px solid #f2f2f7; padding-right: 8px; margin-right: 4px; flex-shrink: 0; }
 .gem-icon { font-size: 18px; margin-bottom: 2px; }
-
-/* Màu chữ cho nhãn */
-.gem-ruby { color: var(--ruby); }
-.gem-sapphire { color: var(--sapphire); }
-.gem-gold { color: #f5a623; }
-.gem-diamond { color: var(--diamond); }
-.gem-emerald { color: var(--emerald); }
-
-/* Bóng đổ cho icon đá quý */
-.gem-ruby .gem-icon { text-shadow: 0 0 8px rgba(255, 59, 48, 0.3); }
-.gem-sapphire .gem-icon { text-shadow: 0 0 8px rgba(90, 200, 250, 0.3); }
-.gem-diamond .gem-icon { text-shadow: 0 0 8px rgba(175, 82, 222, 0.3); }
-
-/* Khu vực chứa 6 viên bi */
-.nums-display {
-    display: flex;
-    gap: 4px; 
-    flex: 1;
-    justify-content: center; /* Canh giữa */
-}
-
-/* VIÊN BI KẾT QUẢ (STYLE MỚI) */
-.res-ball {
-    width: 28px; height: 28px; 
-    border-radius: 8px; /* Bo góc kiểu iOS */
-    background: #f2f2f7; 
-    color: #3a3a3c;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    border: 1px solid #e5e5ea;
-    transition: all 0.2s;
-}
-
-/* MÀU SẮC PHẢN ỨNG */
-.res-ball.is-hot {
-    background-color: #ffdbdb;
-    color: #ff3b30;
-    border-color: #ffb4b4;
-}
-.res-ball
+.gem-ruby { color: var(--ruby); } .gem-sapphire { color: var(--sapphire); } .gem-gold { color: #f5a623; } .gem-diamond { color: var(--diamond); } .gem-emerald { color: var(--emerald); }
+.gem-ruby .gem-icon { text-shadow: 0 0 8px rgba(255, 59, 48, 0.3); } .gem-sapphire .gem-icon { text-shadow: 0 0 8px rgba(90, 200, 250, 0.3); } .gem-diamond .gem-icon { text-shadow: 0 0 8px rgba(175, 82, 222, 0.3); }
+.nums-display { display: flex; gap: 4px; flex: 1; justify-content: center; }
+.res-ball { width: 28px; height: 28px; border-radius: 8px; background: #f2f2f7; color: #3a3a3c; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; border: 1px solid #e5e5ea; transition: all 0.2s; }
+.res-ball.is-hot { background-color: #ffdbdb; color: #ff3b30; border-color: #ffb4b4; }
+.res-ball.is-cold { background-color: #d0f0fd; color: #007aff; border-color: #aaddff; }
+.res-ball.is-last-draw { background-color: #fff9c4; color: #d48806; border-color: #ffe082; box-shadow: 0 0 4px rgba(255, 204, 0, 0.4); }
+.btn-copy-line { background: none; border: none; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #8e8e93; transition: color 0.2s; margin-left: 5px; }
+.btn-copy-line:active { color: var(--ios-blue); transform: scale(0.9); }
+.btn-copy-line svg { width: 20px; height: 20px; stroke-width: 2; }
+.card-manual { border: 1px dashed var(--ios-blue); background: #f9f9fb; }
+.num-input-group { display: flex; justify-content: space-between; gap: 4px; margin: 10px 0; }
+.ios-num-box { width: 100%; aspect-ratio: 1; background: #fff; border: 1px solid #d1d1d6; border-radius: 8px; text-align: center; font-size: 16px; font-weight: 700; color: var(--ios-blue); outline: none; }
+.ios-num-box:focus { border-color: var(--ios-blue); box-shadow: 0 0 0 2px rgba(0,122,255,0.2); }
+.ios-input-custom { background: #fff; border: 1px solid #d1d1d6; padding: 10px; border-radius: 10px; font-size: 16px; font-weight: 600; outline: none; text-align: center; }
+.ios-btn-action { width: 100%; padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, #007aff, #005bb5); color: #fff; font-weight: 700; font-size: 16px; box-shadow: 0 4px 10px rgba(0,122,255,0.3); margin-top: 10px; }
+.ios-btn-action:active { transform: scale(0.98); }
+.input-item label { font-size: 11px; font-weight: 600; color: #8e8e93; text-transform: uppercase; }
