@@ -1,4 +1,4 @@
-/* --- VIETLOTT PRO V4.5 - IOS STYLE (FULL) --- */
+/* --- VIETLOTT PRO V4.6 - IOS STYLE (FULL) --- */
 
 :root {
     --bg-ios: #f2f2f7; 
@@ -99,18 +99,19 @@ body {
 .dot.sapphire { background: var(--sapphire); }
 .dot.gold { background: var(--topaz); }
 
-/* KẾT QUẢ SINH SỐ (RESULT ROW) */
+/* --- PHẦN KẾT QUẢ GỢI Ý (VISUAL BALLS) --- */
 #results.hidden { display: none; }
+
 .result-row {
     display: flex;
     align-items: center;
-    background: #ffffff;
-    padding: 8px 10px;
-    border-radius: 12px;
-    margin-bottom: 8px;
-    border: 1px solid #f2f2f7;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     justify-content: space-between;
+    background: #ffffff;
+    padding: 10px;
+    border-radius: 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.05);
 }
 .animate-pop { animation: popIn 0.3s ease-out backwards; }
 @keyframes popIn {
@@ -133,16 +134,98 @@ body {
     padding-right: 8px;
     margin-right: 5px;
 }
-.gem-icon { font-size: 16px; margin-bottom: 2px; }
+.gem-icon { font-size: 18px; margin-bottom: 2px; }
 
 /* Màu chữ cho nhãn */
 .gem-ruby { color: var(--ruby); }
 .gem-sapphire { color: var(--sapphire); }
-.gem-gold { color: #f5a623; } /* Topaz đậm hơn chút cho dễ đọc */
+.gem-gold { color: #f5a623; }
 .gem-diamond { color: var(--diamond); }
 .gem-emerald { color: var(--emerald); }
 
 /* Bóng đổ cho icon đá quý */
 .gem-ruby .gem-icon { text-shadow: 0 0 8px rgba(255, 59, 48, 0.3); }
 .gem-sapphire .gem-icon { text-shadow: 0 0 8px rgba(90, 200, 250, 0.3); }
-.gem-diamond .gem
+.gem-diamond .gem-icon { text-shadow: 0 0 8px rgba(175, 82, 222, 0.3); }
+
+/* Khu vực chứa 6 viên bi */
+.nums-display {
+    display: flex;
+    gap: 4px; 
+    flex: 1;
+    justify-content: center; 
+}
+
+/* VIÊN BI KẾT QUẢ (STYLE MỚI) */
+.res-ball {
+    width: 30px; height: 30px; 
+    border-radius: 8px; /* Bo góc kiểu iOS */
+    background: #f2f2f7; 
+    color: #3a3a3c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid #e5e5ea;
+    transition: all 0.2s;
+}
+
+/* MÀU SẮC PHẢN ỨNG (Logic Nóng/Lạnh/Rơi) */
+.res-ball.is-hot {
+    background-color: #ffdbdb;
+    color: #ff3b30;
+    border-color: #ffb4b4;
+}
+.res-ball.is-cold {
+    background-color: #d0f0fd;
+    color: #007aff;
+    border-color: #aaddff;
+}
+.res-ball.is-last-draw {
+    background-color: #fff9c4;
+    color: #d48806;
+    border-color: #ffe082;
+    box-shadow: 0 0 4px rgba(255, 204, 0, 0.4); 
+}
+
+/* Nút Copy */
+.btn-copy-line {
+    background: none;
+    border: none;
+    font-size: 16px;
+    padding: 5px;
+    cursor: pointer;
+    opacity: 0.5;
+}
+.btn-copy-line:active { opacity: 1; transform: scale(1.1); }
+
+/* FORM NHẬP TAY */
+.card-manual { border: 1px dashed var(--ios-blue); background: #f9f9fb; }
+.num-input-group { display: flex; justify-content: space-between; gap: 4px; margin: 10px 0; }
+.ios-num-box { 
+    width: 100%; aspect-ratio: 1; 
+    background: #fff; border: 1px solid #d1d1d6; 
+    border-radius: 8px; 
+    text-align: center; font-size: 16px; font-weight: 700; 
+    color: var(--ios-blue); outline: none; 
+}
+.ios-num-box:focus { border-color: var(--ios-blue); box-shadow: 0 0 0 2px rgba(0,122,255,0.2); }
+
+.ios-input-custom { 
+    background: #fff; border: 1px solid #d1d1d6; 
+    padding: 10px; border-radius: 10px; 
+    font-size: 16px; font-weight: 600; outline: none; text-align: center;
+}
+
+.ios-btn-action { 
+    width: 100%; padding: 14px; 
+    border-radius: 12px; border: none; 
+    background: linear-gradient(135deg, #007aff, #005bb5); 
+    color: #fff; font-weight: 700; font-size: 16px; 
+    box-shadow: 0 4px 10px rgba(0,122,255,0.3);
+    margin-top: 10px;
+}
+.ios-btn-action:active { transform: scale(0.98); }
+
+.input-item label { font-size: 11px; font-weight: 600; color: #8e8e93; text-transform: uppercase; }
