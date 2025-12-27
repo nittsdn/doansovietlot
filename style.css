@@ -1,4 +1,4 @@
-/* --- VIETLOTT PRO V4.8 - STABLE CSS --- */
+/* --- VIETLOTT PRO V4.9 - STABLE CSS --- */
 :root {
     --bg-ios: #f2f2f7; --card-white: #ffffff; --ios-blue: #007aff; --text-dark: #1c1c1e;
     --ruby: #ff3b30; --sapphire: #5ac8fa; --topaz: #ffcc00; --diamond: #af52de; --emerald: #34c759;
@@ -15,10 +15,16 @@ body { background: var(--bg-ios); color: var(--text-dark); font-family: -apple-s
 .ios-widget { background: var(--card-white); border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 .widget-header { font-size: 13px; font-weight: 600; color: #8e8e93; text-transform: uppercase; margin-bottom: 10px; }
 .grid-55 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-.num-cell { aspect-ratio: 1; background: #f2f2f7; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #aeaeb2; }
+
+/* STYLE MAP & INTERACTION */
+.num-cell { aspect-ratio: 1; background: #f2f2f7; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #aeaeb2; cursor: pointer; transition: transform 0.1s; }
+.num-cell:active { transform: scale(0.9); }
 .num-cell.is-last-draw { border: 2px solid #ffcc00; color: #ff9500; font-weight: 800; background: #fff9c4; }
 .num-cell.is-hot { background: #ffdbdb; color: #ff3b30; } 
 .num-cell.is-cold { background: #d0f0fd; color: #007aff; }
+/* Số bị tắt (Disabled) */
+.num-cell.is-disabled { background: #e5e5ea !important; color: #c7c7cc !important; text-decoration: line-through; opacity: 0.6; border: none; }
+
 .map-explanation { display: flex; justify-content: space-around; margin-top: 10px; font-size: 10px; color: #636366; }
 .exp-item { display: flex; align-items: center; gap: 4px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -39,9 +45,13 @@ body { background: var(--bg-ios); color: var(--text-dark); font-family: -apple-s
 .res-ball.is-hot { background-color: #ffdbdb; color: #ff3b30; border-color: #ffb4b4; }
 .res-ball.is-cold { background-color: #d0f0fd; color: #007aff; border-color: #aaddff; }
 .res-ball.is-last-draw { background-color: #fff9c4; color: #d48806; border-color: #ffe082; box-shadow: 0 0 4px rgba(255, 204, 0, 0.4); }
-.btn-copy-line { background: none; border: none; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #8e8e93; transition: color 0.2s; margin-left: 5px; }
-.btn-copy-line:active { color: var(--ios-blue); transform: scale(0.9); }
+
+/* NÚT COPY & HIỆU ỨNG */
+.btn-copy-line { background: none; border: none; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #8e8e93; transition: all 0.2s; margin-left: 5px; border-radius: 50%; }
+.btn-copy-line:active { transform: scale(0.9); background: #f2f2f7; }
+.btn-copy-line.copied-success { color: #34c759; transform: scale(1.2); }
 .btn-copy-line svg { width: 20px; height: 20px; stroke-width: 2; }
+
 .card-manual { border: 1px dashed var(--ios-blue); background: #f9f9fb; }
 .num-input-group { display: flex; justify-content: space-between; gap: 4px; margin: 10px 0; }
 .ios-num-box { width: 100%; aspect-ratio: 1; background: #fff; border: 1px solid #d1d1d6; border-radius: 8px; text-align: center; font-size: 16px; font-weight: 700; color: var(--ios-blue); outline: none; }
