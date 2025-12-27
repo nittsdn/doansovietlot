@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Vietlott Pro V4.7 - Master Engine</title>
-    <link rel="stylesheet" href="style.css?v=4.7">
+    <title>Vietlott Pro V4.8 - Stable</title>
+    <link rel="stylesheet" href="style.css?v=4.8">
 </head>
 <body>
     <header class="ios-header">
@@ -15,18 +15,14 @@
                 <h1 id="last-draw-id">Đang tải...</h1>
                 <p id="last-draw-date">Vui lòng đợi</p>
             </div>
-            <div class="last-result-pills" id="last-result-numbers">
-                </div>
+            <div class="last-result-pills" id="last-result-numbers"></div>
         </div>
     </header>
 
     <main class="ios-container">
-        
         <section class="ios-widget">
             <div class="widget-header">BẢN ĐỒ NHIỆT (HEATMAP)</div>
-            <div id="number-grid" class="grid-55">
-                </div>
-            
+            <div id="number-grid" class="grid-55"></div>
             <div class="map-explanation">
                 <div class="exp-item"><i class="dot ruby"></i> <span>Nóng</span></div>
                 <div class="exp-item"><i class="dot sapphire"></i> <span>Lạnh</span></div>
@@ -43,15 +39,13 @@
                 <span>KẾT QUẢ GỢI Ý</span>
                 <span onclick="copyAll()" style="color:#007aff; cursor:pointer;">Copy Tất Cả</span>
             </div>
-            <div id="ticketList">
-                </div>
+            <div id="ticketList"></div>
         </div>
 
         <section class="ios-widget card-manual" style="margin-top: 30px;">
             <div class="widget-header">CẬP NHẬT KẾT QUẢ MỚI NHẤT</div>
-            
             <div class="input-item">
-                <label>Dán chuỗi số hoặc nhập tay (Tự nhảy ô)</label>
+                <label>Dán chuỗi số hoặc nhập tay</label>
                 <div class="num-input-group">
                     <input type="tel" class="ios-num-box" maxlength="2" placeholder="-">
                     <input type="tel" class="ios-num-box" maxlength="2" placeholder="-">
@@ -61,10 +55,9 @@
                     <input type="tel" class="ios-num-box" maxlength="2" placeholder="-">
                 </div>
             </div>
-
             <div class="input-item" style="margin-top:10px; display:flex; align-items:center; gap:10px;">
                 <div style="flex:1">
-                    <label>Số Power (Đặc biệt)</label>
+                    <label>Số Power</label>
                     <input type="tel" id="input-pwr" class="ios-input-custom" maxlength="2" placeholder="00" style="width: 60px; text-align: center; border-color: #ffcc00; color: #d48806;">
                 </div>
                 <div style="flex:1">
@@ -75,9 +68,7 @@
                 *Mẹo: Copy dãy số (VD: 01 02 03...) rồi dán vào ô đầu tiên.
             </p>
         </section>
-
     </main>
-
-    <script src="engine.js?v=4.7"></script>
+    <script src="engine.js?v=4.8"></script>
 </body>
 </html>
