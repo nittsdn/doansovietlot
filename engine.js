@@ -1,11 +1,13 @@
-/* * VIETLOTT PRO V5.2 - ENGINE
- * Logic: Same as V5.1
+/* * VIETLOTT PRO V5.3 - CLEAN CORE
+ * Fix: Data Migration to 'vietlott_pro_v5_storage' to prevent crash
  */
 
+// --- CẤU HÌNH ---
 let db = [], stats = { hot: [], cold: [], gap: [] };
 let historyDataStrings = []; 
 let disabledNumbers = [];
 
+// BỘ ICON ĐÁ QUÝ 3D (GLOSSY)
 const ICONS = {
     DIAMOND: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-dia" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#e0f7fa"/><stop offset="100%" style="stop-color:#b2ebf2"/></linearGradient></defs><path d="M32 2 L2 24 L32 62 L62 24 L32 2 Z" fill="url(#grad-dia)" stroke="#00bcd4" stroke-width="1.5"/><path d="M2 24 L62 24 M12 24 L32 2 L52 24 M32 62 L12 24 M32 62 L52 24" stroke="#00acc1" stroke-width="1" stroke-opacity="0.6"/><path d="M20 24 L32 36 L44 24" fill="white" fill-opacity="0.4"/></svg>`,
     RUBY: `<svg viewBox="0 0 64 64" fill="none"><defs><radialGradient id="grad-ruby" cx="30%" cy="30%" r="70%"><stop offset="0%" style="stop-color:#ff8a80"/><stop offset="100%" style="stop-color:#c62828"/></radialGradient></defs><path d="M32 6 L58 24 L48 58 H16 L6 24 L32 6 Z" fill="url(#grad-ruby)" stroke="#b71c1c" stroke-width="1"/><path d="M32 6 L32 28 M6 24 L32 28 L58 24 M16 58 L32 28 L48 58" stroke="#ffcdd2" stroke-width="1" stroke-opacity="0.5"/></svg>`,
@@ -21,6 +23,9 @@ const GEMS = {
     DIAMOND: { id: 'DIAMOND', name: "DIAMOND", icon: ICONS.DIAMOND, color: "gem-diamond" },
     EMERALD: { id: 'EMERALD', name: "EMERALD", icon: ICONS.EMERALD, color: "gem-emerald" }
 };
+
+// STORAGE KEY MỚI -> TRÁNH XUNG ĐỘT
+const STORAGE_KEY = 'vietlott_pro_v5_storage';
 
 async function loadData() {
     updateStatus("Đang tải dữ liệu...", true);
@@ -38,17 +43,17 @@ async function loadData() {
             return { id: p[0], nums: nums, pwr: Number(p[2]), date: p[3] };
         }).filter(item => item !== null).reverse(); 
 
+        // Load từ kho mới
         try {
-            const localData = localStorage.getItem('manual_update_v4');
+            const localData = localStorage.getItem(STORAGE_KEY);
             if (localData) {
                 const manualEntry = JSON.parse(localData);
                 if (manualEntry && manualEntry.nums && manualEntry.nums.length === 6) {
                     const latestDbId = db.length > 0 ? parseInt(db[0].id) : 0;
                     if (parseInt(manualEntry.id) > latestDbId) db.unshift(manualEntry);
-                    else localStorage.removeItem('manual_update_v4');
                 }
             }
-        } catch (err) { localStorage.removeItem('manual_update_v4'); }
+        } catch (err) { localStorage.removeItem(STORAGE_KEY); }
 
         if (db.length === 0) throw new Error("Dữ liệu trống!");
 
@@ -306,7 +311,7 @@ function copyLine(btnElement, text) {
 function copyAll() {
     const rows = document.querySelectorAll('.nums-display');
     let text = "";
-    rows.forEach(r => text += Array.from(r.children).map(c => c.innerText).join(' ') + "\n";
+    rows.forEach(r => text += Array.from(r.children).map(c => c.innerText).join(' ') + "\n");
     navigator.clipboard.writeText(text).then(() => alert("Đã copy tất cả!"));
 }
 
@@ -347,7 +352,8 @@ if(saveBtn) {
         if (nums.some(isNaN) || isNaN(pwr)) { alert("Vui lòng nhập đủ số!"); return; }
         let d = new Date(); 
         const entry = { id: (parseInt(db[0].id) + 1).toString(), nums: nums.sort((a,b)=>a-b), pwr: pwr, date: `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}` };
-        localStorage.setItem('manual_update_v4', JSON.stringify(entry));
+        // LƯU VÀO KEY MỚI
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(entry));
         alert(`Đã lưu Kỳ ${entry.id}!`); location.reload(); 
     };
 }
