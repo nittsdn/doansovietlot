@@ -1,33 +1,27 @@
-/* * VIETLOTT PRO V5.0 - DESKTOP EDITION
- * Features: Gold Bar Icon, Emerald Hexagon, Full Legend, PC Responsive
+/* * VIETLOTT PRO V5.2 - ENGINE
+ * Logic: Same as V5.1
  */
 
-// --- CẤU HÌNH ---
 let db = [], stats = { hot: [], cold: [], gap: [] };
 let historyDataStrings = []; 
 let disabledNumbers = [];
 
-// ĐỊNH NGHĨA ICON SVG (Vẽ bằng code để sắc nét mọi màn hình)
 const ICONS = {
-    FIRE: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 23c6.075 0 11-4.925 11-11 0-6.075-4.925-11-11-11S1 5.925 1 12c0 6.075 4.925 11 11 11zm0-20c4.97 0 9 4.03 9 9s-4.03 9-9 9-9-4.03-9-9 4.03-9 9-9z"/><path d="M12 18c1.1 0 2-.9 2-2 0-1.1-.9-2-2-2s-2 .9-2 2 .9 2 2 2z" opacity=".3"/><path d="M10.5 8.5c0 1.5 1.5 2 2.5 3.5 1.25-1.5 2.5-2.5 2.5-4 0-1.5-1.5-3-2.5-3-1 0-2.5 1.5-2.5 3.5z"/></svg>`,
-    SNOW: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L12 22M2 12L22 12M4.93 4.93L19.07 19.07M19.07 4.93L4.93 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
-    // ICON THỎI VÀNG (GOLD BAR)
-    GOLD: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 8h16l-2 9H6L4 8z" opacity="0.8"/><path d="M6 5h12l2 3H4l2-3z"/><path d="M6 17h12l-1 2H7l-1-2z" opacity="0.6"/></svg>`,
-    // ICON LỤC GIÁC (EMERALD HEXAGON)
-    HEXAGON: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l9 5v10l-9 5-9-5V7z"/></svg>`,
-    DIAMOND: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 12l10 10 10-10L12 2z"/></svg>`
+    DIAMOND: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-dia" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#e0f7fa"/><stop offset="100%" style="stop-color:#b2ebf2"/></linearGradient></defs><path d="M32 2 L2 24 L32 62 L62 24 L32 2 Z" fill="url(#grad-dia)" stroke="#00bcd4" stroke-width="1.5"/><path d="M2 24 L62 24 M12 24 L32 2 L52 24 M32 62 L12 24 M32 62 L52 24" stroke="#00acc1" stroke-width="1" stroke-opacity="0.6"/><path d="M20 24 L32 36 L44 24" fill="white" fill-opacity="0.4"/></svg>`,
+    RUBY: `<svg viewBox="0 0 64 64" fill="none"><defs><radialGradient id="grad-ruby" cx="30%" cy="30%" r="70%"><stop offset="0%" style="stop-color:#ff8a80"/><stop offset="100%" style="stop-color:#c62828"/></radialGradient></defs><path d="M32 6 L58 24 L48 58 H16 L6 24 L32 6 Z" fill="url(#grad-ruby)" stroke="#b71c1c" stroke-width="1"/><path d="M32 6 L32 28 M6 24 L32 28 L58 24 M16 58 L32 28 L48 58" stroke="#ffcdd2" stroke-width="1" stroke-opacity="0.5"/></svg>`,
+    SAPPHIRE: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-sapphire" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#42a5f5"/><stop offset="100%" style="stop-color:#0d47a1"/></linearGradient></defs><rect x="10" y="10" width="44" height="44" rx="12" ry="12" fill="url(#grad-sapphire)" stroke="#0d47a1" stroke-width="1"/><rect x="20" y="20" width="24" height="24" rx="6" fill="white" fill-opacity="0.2"/></svg>`,
+    GOLD: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-gold" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#ffe082"/><stop offset="50%" style="stop-color:#ffca28"/><stop offset="100%" style="stop-color:#ff6f00"/></linearGradient></defs><path d="M12 20 L20 10 H56 L48 20 H12 Z" fill="#fff9c4"/> <path d="M12 20 L4 46 H40 L48 20 H12 Z" fill="url(#grad-gold)"/> <path d="M48 20 L40 46 H52 L60 20 H48 Z" fill="#ffa000"/> <path d="M15 25 L10 40 M25 25 L20 40 M35 25 L30 40" stroke="#ff6f00" stroke-width="1" stroke-opacity="0.3"/></svg>`,
+    EMERALD: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-em" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#66bb6a"/><stop offset="100%" style="stop-color:#1b5e20"/></linearGradient></defs><path d="M18 6 H46 L58 18 V46 L46 58 H18 L6 46 V18 L18 6 Z" fill="url(#grad-em)" stroke="#1b5e20" stroke-width="1"/><rect x="22" y="22" width="20" height="20" fill="white" fill-opacity="0.2"/></svg>`
 };
 
 const GEMS = {
-    RUBY: { id: 'RUBY', name: "RUBY", icon: ICONS.FIRE, color: "gem-ruby" },
-    SAPPHIRE: { id: 'SAPPHIRE', name: "SAPPHIRE", icon: ICONS.SNOW, color: "gem-sapphire" },
-    // ĐỔI TÊN TOPAZ -> GOLD RATIO
+    RUBY: { id: 'RUBY', name: "RUBY", icon: ICONS.RUBY, color: "gem-ruby" },
+    SAPPHIRE: { id: 'SAPPHIRE', name: "SAPPHIRE", icon: ICONS.SAPPHIRE, color: "gem-sapphire" },
     GOLD: { id: 'GOLD', name: "GOLD", icon: ICONS.GOLD, color: "gem-gold" },
     DIAMOND: { id: 'DIAMOND', name: "DIAMOND", icon: ICONS.DIAMOND, color: "gem-diamond" },
-    EMERALD: { id: 'EMERALD', name: "EMERALD", icon: ICONS.HEXAGON, color: "gem-emerald" }
+    EMERALD: { id: 'EMERALD', name: "EMERALD", icon: ICONS.EMERALD, color: "gem-emerald" }
 };
 
-// --- PHẦN 1: LOAD DỮ LIỆU ---
 async function loadData() {
     updateStatus("Đang tải dữ liệu...", true);
     try {
@@ -98,7 +92,6 @@ function analyzeData() {
     stats.gap = lastSeen;
 }
 
-// --- PHẦN 2: TƯƠNG TÁC MAP ---
 function toggleNumber(n) {
     const idx = disabledNumbers.indexOf(n);
     if (idx > -1) disabledNumbers.splice(idx, 1);
@@ -120,14 +113,12 @@ function renderMap() {
         div.className = 'num-cell';
         div.innerText = i;
         
-        // Logic màu sắc
         if (disabledNumbers.includes(i)) {
             div.classList.add('is-disabled');
         } else {
-            // Check Power trước (Ưu tiên cao nhất)
             if (i === lastPower) {
                 div.classList.add('is-power-ball');
-                div.innerHTML += `<span class="power-icon">⚡</span>`; // Icon tia sét
+                div.innerHTML += `<span class="power-icon">⚡</span>`;
             }
             else if (lastNums.includes(i)) div.classList.add('is-last-draw');
             else if (stats.hot.includes(i)) div.classList.add('is-hot');
@@ -139,7 +130,6 @@ function renderMap() {
     }
 }
 
-// --- PHẦN 3: GENERATOR (UPDATE GOLD) ---
 function isRedZone(ticket) {
     if (!ticket || ticket.length !== 6) return "Lỗi vé";
     const t = ticket.sort((a,b) => a-b);
@@ -199,7 +189,6 @@ function generateTicket(gemType) {
         }
 
         if (isRedZone(ticket) === "OK") {
-            // Check GOLD (Cũ là Topaz)
             if (gemType === 'GOLD') {
                 const sum = ticket.reduce((a,b)=>a+b,0);
                 if (sum < 130 || sum > 190) continue;
@@ -226,7 +215,6 @@ function generateBasicSafeTicket() {
     return t.sort((a,b)=>a-b);
 }
 
-// --- PHẦN 4: GIAO DIỆN ---
 function renderHeaderInfo() {
     if (!db.length) return;
     const latest = db[0];
@@ -256,7 +244,6 @@ function generateFinalTickets() {
     list.innerHTML = '';
     document.getElementById('results').classList.remove('hidden');
     
-    // ĐỔI TOPAZ -> GOLD TRONG DANH SÁCH
     const strategies = ['RUBY', 'SAPPHIRE', 'GOLD', 'DIAMOND', 'EMERALD'];
     const lastDrawNums = db.length > 0 ? db[0].nums : [];
 
@@ -307,7 +294,6 @@ function copyLine(btnElement, text) {
         navigator.clipboard.writeText(text).then(() => {
             const originalHTML = btnElement.innerHTML;
             btnElement.classList.add('copied-success');
-            // Dấu Tick thành công
             btnElement.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34c759" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
             setTimeout(() => {
                 btnElement.classList.remove('copied-success');
@@ -320,7 +306,7 @@ function copyLine(btnElement, text) {
 function copyAll() {
     const rows = document.querySelectorAll('.nums-display');
     let text = "";
-    rows.forEach(r => text += Array.from(r.children).map(c => c.innerText).join(' ') + "\n");
+    rows.forEach(r => text += Array.from(r.children).map(c => c.innerText).join(' ') + "\n";
     navigator.clipboard.writeText(text).then(() => alert("Đã copy tất cả!"));
 }
 
