@@ -1,73 +1,148 @@
+/* --- VIETLOTT PRO V4.5 - IOS STYLE (FULL) --- */
+
 :root {
-    --bg-ios: #f2f2f7; --card-white: #ffffff; --ios-blue: #007aff;
-    --text-dark: #1c1c1e; --ruby: #ff8a80; --sapphire: #81d4fa; 
-    --topaz: #ffd54f; --diamond: #ce93d8; --emerald: #a5d6a7;
+    --bg-ios: #f2f2f7; 
+    --card-white: #ffffff; 
+    --ios-blue: #007aff;
+    --text-dark: #1c1c1e;
+    
+    /* Màu Đá Quý */
+    --ruby: #ff3b30;      /* Đỏ */
+    --sapphire: #5ac8fa;  /* Xanh dương nhạt */
+    --topaz: #ffcc00;     /* Vàng */
+    --diamond: #af52de;   /* Tím */
+    --emerald: #34c759;   /* Xanh lá */
 }
 
 body {
-    background: var(--bg-ios); color: var(--text-dark);
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    margin: 0; padding-bottom: 50px; user-select: none;
+    background: var(--bg-ios); 
+    color: var(--text-dark);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0; 
+    padding-bottom: 50px; 
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
+/* HEADER */
 .ios-header {
-    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    position: sticky; top: 0; z-index: 1000; padding: 15px 20px; border-bottom: 0.5px solid #c6c6c8;
+    background: rgba(255, 255, 255, 0.85); 
+    backdrop-filter: blur(20px); 
+    -webkit-backdrop-filter: blur(20px);
+    position: sticky; top: 0; z-index: 1000; 
+    padding: 10px 15px; 
+    border-bottom: 0.5px solid #c6c6c8;
 }
-
 .header-content { display: flex; justify-content: space-between; align-items: center; }
-.draw-info h1 { margin: 0; font-size: 20px; color: var(--ios-blue); }
+.draw-info h1 { margin: 0; font-size: 18px; font-weight: 800; color: var(--ios-blue); }
 .draw-info p { margin: 0; font-size: 11px; color: #8e8e93; }
 
-.last-result-pills { display: flex; gap: 4px; }
-.pill { background: #e5e5ea; padding: 4px 7px; border-radius: 6px; font-size: 12px; font-weight: 700; }
-.pill.pwr { background: #f5d3f5; color: #af52de; border: 1px solid #af52de; }
-
-.ios-widget { background: var(--card-white); margin: 12px; padding: 16px; border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-.widget-header { font-size: 11px; font-weight: 700; color: #8e8e93; margin-bottom: 12px; text-transform: uppercase; }
-
-.grid-55 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-.num-cell {
-    aspect-ratio: 1; border-radius: 10px; background: #e5e5ea;
+/* KẾT QUẢ MINI TRÊN HEADER */
+.last-result-pills { display: flex; gap: 3px; }
+.res-ball-mini {
+    width: 20px; height: 20px;
+    background: #e5e5ea;
+    border-radius: 50%;
+    font-size: 10px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 600; color: #a1a1a1; transition: 0.2s; border: 2px solid transparent;
+    color: #3a3a3c;
 }
-.num-cell.active { background: #ffffff; color: var(--text-dark); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-.num-cell.active.hot { background: #fce4ec; color: #d81b60; }
-.num-cell.repeat { border-color: var(--topaz); }
-.num-cell.power { border-color: var(--diamond); position: relative; }
-.num-cell.power::after { content: '⚡'; position: absolute; top: -2px; right: -2px; font-size: 8px; }
+.res-ball-mini.is-power { background: #ffcc00; color: #fff; }
 
-.map-explanation { margin-top: 15px; padding-top: 15px; border-top: 0.5px solid #eee; display: flex; flex-direction: column; gap: 8px; }
-.exp-item { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-.dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-.ruby { background: var(--ruby); } .sapphire { background: var(--sapphire); }
-.ring.gold { width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid var(--topaz); display: inline-block; }
-.bolt-icon { color: var(--diamond); font-size: 14px; width: 12px; text-align: center; font-weight: bold; }
-
-.ios-main-btn {
-    width: 90%; height: 52px; background: var(--ios-blue); color: #fff;
-    border: none; border-radius: 16px; font-size: 17px; font-weight: 600; margin: 10px auto; display: block;
+.ios-btn-icon {
+    background: none; border: none; font-size: 20px; cursor: pointer;
 }
-.ios-main-btn:disabled { background: #d1d1d6; color: #8e8e93; }
 
-.gem-card { background: #fff; margin: 8px 12px; padding: 12px; border-radius: 18px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.gem-badge { padding: 6px 8px; border-radius: 10px; font-size: 10px; font-weight: 800; color: #fff; min-width: 80px; text-align: center; }
-.res-nums { display: flex; gap: 4px; flex-grow: 1; justify-content: center; }
-.res-num-ball {
-    width: 32px; height: 32px; background: #f2f2f7; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; border: 1px solid #e5e5ea;
+/* CONTAINER */
+.ios-container { padding: 15px; max-width: 600px; mx: auto; }
+.ios-widget {
+    background: var(--card-white);
+    border-radius: 16px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.copy-btn { background: #f2f2f7; border: none; border-radius: 10px; width: 36px; height: 36px; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.widget-header {
+    font-size: 13px; font-weight: 600; color: #8e8e93;
+    text-transform: uppercase; margin-bottom: 10px;
+}
 
-.card-manual { border: 1px dashed var(--ios-blue); background: #f9f9fb; }
-.num-input-group { display: flex; justify-content: space-between; gap: 4px; margin: 10px 0; }
-.ios-num-box { width: 42px; height: 42px; background: #fff; border: 1px solid #d1d1d6; border-radius: 10px; text-align: center; font-size: 18px; font-weight: 700; color: var(--ios-blue); outline: none; }
-.ios-input-custom, .ios-select-custom { background: #fff; border: 1px solid #d1d1d6; padding: 10px; border-radius: 10px; font-size: 16px; font-weight: 600; outline: none; }
-.ios-btn-action { width: 100%; padding: 15px; border-radius: 14px; border: none; background: #34c759; color: #fff; font-weight: 700; font-size: 16px; }
+/* MAP SỐ */
+.grid-55 {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+.num-cell {
+    aspect-ratio: 1;
+    background: #f2f2f7;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: #aeaeb2;
+}
+.num-cell.is-last-draw { 
+    border: 2px solid #ffcc00; 
+    color: #ff9500; font-weight: 800; 
+    background: #fff9c4;
+}
+.num-cell.is-hot { background: #ffdbdb; color: #ff3b30; } /* Nền đỏ nhạt */
+.num-cell.is-cold { background: #d0f0fd; color: #007aff; } /* Nền xanh nhạt */
 
-.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 2000; }
-.ios-sheet { position: absolute; bottom: 0; width: 100%; background: #fff; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; }
-.sheet-handle { width: 36px; height: 5px; background: #d1d1d6; border-radius: 3px; margin: 0 auto 15px; }
-.strategy-opt { padding: 18px; border-bottom: 0.5px solid #f2f2f7; list-style: none; text-align: center; font-weight: 600; color: var(--ios-blue); }
-.sheet-close { width: 100%; padding: 15px; border: none; background: #f2f2f7; border-radius: 15px; margin-top: 10px; font-weight: bold; color: #ff3b30; }
+/* GIẢI THÍCH MAP */
+.map-explanation {
+    display: flex; justify-content: space-around; margin-top: 10px;
+    font-size: 10px; color: #636366;
+}
+.exp-item { display: flex; align-items: center; gap: 4px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.ruby { background: var(--ruby); }
+.dot.sapphire { background: var(--sapphire); }
+.dot.gold { background: var(--topaz); }
+
+/* KẾT QUẢ SINH SỐ (RESULT ROW) */
+#results.hidden { display: none; }
+.result-row {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    padding: 8px 10px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    border: 1px solid #f2f2f7;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    justify-content: space-between;
+}
+.animate-pop { animation: popIn 0.3s ease-out backwards; }
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Nhãn Đá Quý bên trái */
+.gem-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #555;
+    border-right: 1px solid #eee;
+    padding-right: 8px;
+    margin-right: 5px;
+}
+.gem-icon { font-size: 16px; margin-bottom: 2px; }
+
+/* Màu chữ cho nhãn */
+.gem-ruby { color: var(--ruby); }
+.gem-sapphire { color: var(--sapphire); }
+.gem-gold { color: #f5a623; } /* Topaz đậm hơn chút cho dễ đọc */
+.gem-diamond { color: var(--diamond); }
+.gem-emerald { color: var(--emerald); }
+
+/* Bóng đổ cho icon đá quý */
+.gem-ruby .gem-icon { text-shadow: 0 0 8px rgba(255, 59, 48, 0.3); }
+.gem-sapphire .gem-icon { text-shadow: 0 0 8px rgba(90, 200, 250, 0.3); }
+.gem-diamond .gem
