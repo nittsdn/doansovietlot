@@ -1,5 +1,5 @@
 /* * VIETLOTT PRO V5.4 - FINAL ENGINE
- * CƠ HỘI CUỐI: Fix lỗi bất đồng bộ khi tải dữ liệu từ Google Sheets
+ * FIXED: Bọc toàn bộ code "chạy rông" vào init để tránh lỗi db[0] undefined
  */
 
 let db = [], stats = { hot: [], cold: [], gap: [] };
@@ -32,13 +32,13 @@ async function loadData() {
             };
         });
         db.sort((a, b) => parseInt(b.id) - parseInt(a.id));
-
-        // Mồi lại dữ liệu cũ để logic Nóng/Lạnh của bạn chạy đúng
         historyDataStrings = db.map(item => item.nums.join(' '));
 
         if (db.length > 0) {
-            // SAU KHI TẢI XONG MỚI CHẠY KHỞI TẠO (INIT)
-            initApp(); 
+            analyzeData();
+            renderGrid();
+            updateUI();
+            setupEventsAfterLoad(); // Gọi hàm bọc các nút bấm
             updateStatus(`${db[0].date} | J1: ${db[0].jackpot1}`, false);
         }
     } catch (e) {
@@ -46,27 +46,24 @@ async function loadData() {
     }
 }
 
-// GÔM TẤT CẢ LOGIC KHỞI TẠO GỐC VÀO ĐÂY
-function initApp() {
-    analyzeData();
-    renderGrid();
-    updateUI();
-    
-    // ĐƯA CÁC SỰ KIỆN CLICK VÀO ĐÂY ĐỂ ĐẢM BẢO CHẠY SAU KHI CÓ DATA
+// BỌC TOÀN BỘ LOGIC "CHẠY RÔNG" CỦA BẢN GỐC VÀO ĐÂY
+function setupEventsAfterLoad() {
     const pasteBtn = document.getElementById('paste-btn');
+    const inputs = document.querySelectorAll('.ios-num-box');
+    const saveBtn = document.getElementById('save-manual-btn');
+
     if(pasteBtn) {
         pasteBtn.onclick = async () => {
             const text = await navigator.clipboard.readText();
             const numbers = text.match(/\d+/g).map(Number).filter(n => n >= 1 && n <= 55);
             if (numbers.length >= 6) {
-                const inputs = document.querySelectorAll('.ios-num-box');
                 inputs.forEach((input, i) => { if(i < 6) input.value = numbers[i].toString().padStart(2, '0'); });
                 if (numbers[6]) document.getElementById('input-pwr').value = numbers[6].toString().padStart(2, '0');
+                if(saveBtn) saveBtn.focus();
             }
         };
     }
 
-    const inputs = document.querySelectorAll('.ios-num-box');
     inputs.forEach((input, idx) => {
         input.addEventListener('input', () => {
             if (input.value.length >= 2) {
@@ -76,16 +73,19 @@ function initApp() {
         });
     });
 
-    const saveBtn = document.getElementById('save-manual-btn');
     if(saveBtn) {
         saveBtn.onclick = () => {
             const nums = Array.from(inputs).map(i => parseInt(i.value));
-            if (nums.some(isNaN)) { alert("Vui lòng nhập đủ số!"); return; }
-            alert("Đã ghi nhận bộ số!");
+            const pwrVal = parseInt(document.getElementById('input-pwr').value);
+            if (nums.some(isNaN) || isNaN(pwrVal)) { alert("Vui lòng nhập đủ số!"); return; }
+            // Logic lấy ID tiếp theo an toàn sau khi db đã load
+            const nextId = (parseInt(db[0].id) + 1).toString();
+            alert("Đã ghi nhận bộ số cho kỳ #" + nextId);
         };
     }
 }
 
+// --- CÁC HÀM CÒN LẠI GIỮ NGUYÊN 100% ---
 function analyzeData() {
     let counts = new Array(56).fill(0);
     let lastPos = new Array(56).fill(-1);
@@ -162,7 +162,7 @@ function showPopup(nums) {
     const modal = document.createElement('div');
     modal.className = 'ios-modal';
     modal.onclick = (e) => e.stopPropagation();
-    modal.innerHTML = `<h3>GỢI Ý KỲ TIẾP THEO</h3><div class=\"modal-nums\">${nums.map(n => `<span class=\"pill-num\">${n.toString().padStart(2, '0')}</span>`).join('')}</div><button class=\"ios-btn-action\" onclick=\"this.parentElement.parentElement.click()\">XÁC NHẬN</button>`;
+    modal.innerHTML = `<h3>GỢI Ý KỲ TIẾP THEO</h3><div class="modal-nums">${nums.map(n => `<span class="pill-num">${n.toString().padStart(2, '0')}</span>`).join('')}</div><button class="ios-btn-action" onclick="this.parentElement.parentElement.click()">XÁC NHẬN</button>`;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 }
@@ -172,5 +172,4 @@ function updateStatus(msg, isLoading) {
     if (el) el.innerText = msg;
 }
 
-// KHỞI CHẠY ĐÚNG TRÌNH TỰ
 window.onload = loadData;
