@@ -23,16 +23,8 @@
   <div class="card">
     <h3>BẢN ĐỒ NHIỆT (BẤM ĐỂ TẮT/MỞ SỐ)</h3>
 
-    <div class="grid">
-      <!-- 1 → 55 -->
-      <script>
-        for (let i = 1; i <= 55; i++) {
-          document.write(
-            `<div class="cell" data-number="${i}">${String(i).padStart(2, "0")}</div>`
-          );
-        }
-      </script>
-    </div>
+    <!-- GRID -->
+    <div id="number-grid" class="grid"></div>
 
     <div class="legend">
       <span><i class="dot ready"></i> Sẵn sàng</span>
