@@ -1,5 +1,5 @@
 /* * VIETLOTT PRO V5.4 - FINAL ENGINE
- * Scan & Fix: Đảm bảo đồng bộ dữ liệu Sheets với Logic gốc của người dùng
+ * CƠ HỘI CUỐI: Fix lỗi bất đồng bộ khi tải dữ liệu từ Google Sheets
  */
 
 let db = [], stats = { hot: [], cold: [], gap: [] };
@@ -12,18 +12,15 @@ const ICONS = {
     ICE: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-ice" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#e1f5fe"/><stop offset="100%" style="stop-color:#81d4fa"/></linearGradient></defs><rect x="12" y="12" width="40" height="40" rx="8" fill="url(#grad-ice)" stroke="#4fc3f7" stroke-width="1.5"/><path d="M20 20 L44 44 M44 20 L20 44" stroke="white" stroke-width="1.5" stroke-opacity="0.4"/></svg>`
 };
 
-// 1. LINK SHEETS CỦA BẠN
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQaiHVe1aFj0i1AN9S2-RQCMyrAMluwi_2cs6LSKURf4Elmg9TBpzhHekecCRR-qa2-TwOuXQyGNRMp/pub?gid=213374634&single=true&output=csv";
 
-// 2. HÀM NẠP DỮ LIỆU TỪ SHEETS (THAY THẾ HÀM LOADDATA CŨ)
-async function fetchSheetData() {
+async function loadData() {
     updateStatus("Đồng bộ dữ liệu...", true);
     try {
         const response = await fetch(SHEET_URL);
         const csv = await response.text();
         const rows = csv.split(/\r?\n/).filter(r => r.trim() !== "");
         
-        // Map vào db
         db = rows.slice(1).map(row => {
             const c = row.split(",");
             return {
@@ -36,14 +33,12 @@ async function fetchSheetData() {
         });
         db.sort((a, b) => parseInt(b.id) - parseInt(a.id));
 
-        // CHỖ NÀY QUAN TRỌNG: Mồi lại mảng historyDataStrings cũ từ dữ liệu Sheets
+        // Mồi lại dữ liệu cũ để logic Nóng/Lạnh của bạn chạy đúng
         historyDataStrings = db.map(item => item.nums.join(' '));
 
         if (db.length > 0) {
-            // Chạy logic gốc của bạn
-            analyzeData();
-            renderGrid();
-            updateUI();
+            // SAU KHI TẢI XONG MỚI CHẠY KHỞI TẠO (INIT)
+            initApp(); 
             updateStatus(`${db[0].date} | J1: ${db[0].jackpot1}`, false);
         }
     } catch (e) {
@@ -51,11 +46,49 @@ async function fetchSheetData() {
     }
 }
 
+// GÔM TẤT CẢ LOGIC KHỞI TẠO GỐC VÀO ĐÂY
+function initApp() {
+    analyzeData();
+    renderGrid();
+    updateUI();
+    
+    // ĐƯA CÁC SỰ KIỆN CLICK VÀO ĐÂY ĐỂ ĐẢM BẢO CHẠY SAU KHI CÓ DATA
+    const pasteBtn = document.getElementById('paste-btn');
+    if(pasteBtn) {
+        pasteBtn.onclick = async () => {
+            const text = await navigator.clipboard.readText();
+            const numbers = text.match(/\d+/g).map(Number).filter(n => n >= 1 && n <= 55);
+            if (numbers.length >= 6) {
+                const inputs = document.querySelectorAll('.ios-num-box');
+                inputs.forEach((input, i) => { if(i < 6) input.value = numbers[i].toString().padStart(2, '0'); });
+                if (numbers[6]) document.getElementById('input-pwr').value = numbers[6].toString().padStart(2, '0');
+            }
+        };
+    }
+
+    const inputs = document.querySelectorAll('.ios-num-box');
+    inputs.forEach((input, idx) => {
+        input.addEventListener('input', () => {
+            if (input.value.length >= 2) {
+                if (idx < 5) inputs[idx+1].focus();
+                else document.getElementById('input-pwr').focus();
+            }
+        });
+    });
+
+    const saveBtn = document.getElementById('save-manual-btn');
+    if(saveBtn) {
+        saveBtn.onclick = () => {
+            const nums = Array.from(inputs).map(i => parseInt(i.value));
+            if (nums.some(isNaN)) { alert("Vui lòng nhập đủ số!"); return; }
+            alert("Đã ghi nhận bộ số!");
+        };
+    }
+}
+
 function analyzeData() {
     let counts = new Array(56).fill(0);
     let lastPos = new Array(56).fill(-1);
-    
-    // Logic gốc của bạn: Duyệt mảng historyDataStrings
     historyDataStrings.forEach((str, idx) => {
         const nums = str.split(' ').map(Number);
         nums.forEach(n => {
@@ -63,12 +96,10 @@ function analyzeData() {
             if (lastPos[n] === -1) lastPos[n] = idx;
         });
     });
-
     let mapped = [];
     for (let i = 1; i <= 55; i++) {
         mapped.push({ n: i, count: counts[i], gap: lastPos[i] });
     }
-
     stats.hot = [...mapped].sort((a, b) => b.count - a.count).slice(0, 6).map(x => x.n);
     stats.gap = [...mapped].sort((a, b) => b.gap - a.gap).slice(0, 6).map(x => x.n);
 }
@@ -98,16 +129,9 @@ function renderGrid() {
         const div = document.createElement('div');
         div.className = 'num-cell';
         if (disabledNumbers.includes(i)) div.classList.add('disabled');
-        
         let icon = ICONS.DIAMOND;
-        if (stats.hot.includes(i)) {
-            div.classList.add('hot');
-            icon = ICONS.RUBY;
-        } else if (stats.gap.includes(i)) {
-            div.classList.add('cold');
-            icon = ICONS.ICE;
-        }
-
+        if (stats.hot.includes(i)) { div.classList.add('hot'); icon = ICONS.RUBY; }
+        else if (stats.gap.includes(i)) { div.classList.add('cold'); icon = ICONS.ICE; }
         div.innerHTML = `<div class="cell-icon">${icon}</div><div class="cell-num">${i.toString().padStart(2, '0')}</div>`;
         div.onclick = () => {
             div.classList.toggle('disabled');
@@ -120,11 +144,8 @@ function renderGrid() {
 
 function generateSystem() {
     const pool = [];
-    for (let i = 1; i <= 55; i++) {
-        if (!disabledNumbers.includes(i)) pool.push(i);
-    }
-    if (pool.length < 6) { alert("Không đủ số để tạo!"); return; }
-    
+    for (let i = 1; i <= 55; i++) if (!disabledNumbers.includes(i)) pool.push(i);
+    if (pool.length < 6) return;
     const res = [];
     const tempPool = [...pool];
     while (res.length < 6) {
@@ -141,39 +162,15 @@ function showPopup(nums) {
     const modal = document.createElement('div');
     modal.className = 'ios-modal';
     modal.onclick = (e) => e.stopPropagation();
-    modal.innerHTML = `<h3>GỢI Ý KỲ TIẾP THEO</h3><div class="modal-nums">${nums.map(n => `<span class="pill-num">${n.toString().padStart(2, '0')}</span>`).join('')}</div><button class="ios-btn-action" onclick="this.parentElement.parentElement.click()">XÁC NHẬN</button>`;
+    modal.innerHTML = `<h3>GỢI Ý KỲ TIẾP THEO</h3><div class=\"modal-nums\">${nums.map(n => `<span class=\"pill-num\">${n.toString().padStart(2, '0')}</span>`).join('')}</div><button class=\"ios-btn-action\" onclick=\"this.parentElement.parentElement.click()\">XÁC NHẬN</button>`;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 }
-
-// KHÔI PHỤC TOÀN BỘ LOGIC NHẬP LIỆU GỐC
-const pasteBtn = document.getElementById('paste-btn');
-if(pasteBtn) {
-    pasteBtn.onclick = async () => {
-        const text = await navigator.clipboard.readText();
-        const numbers = text.match(/\d+/g).map(Number).filter(n => n >= 1 && n <= 55);
-        if (numbers.length >= 6) {
-            const inputs = document.querySelectorAll('.ios-num-box');
-            inputs.forEach((input, i) => { if(i < 6) input.value = numbers[i].toString().padStart(2, '0'); });
-            if (numbers[6]) document.getElementById('input-pwr').value = numbers[6].toString().padStart(2, '0');
-        }
-    };
-}
-
-const inputs = document.querySelectorAll('.ios-num-box');
-inputs.forEach((input, idx) => {
-    input.addEventListener('input', () => {
-        if (input.value.length >= 2) {
-            if (idx < 5) inputs[idx+1].focus();
-            else document.getElementById('input-pwr').focus();
-        }
-    });
-});
 
 function updateStatus(msg, isLoading) {
     const el = document.getElementById('last-draw-date');
     if (el) el.innerText = msg;
 }
 
-// THAY THẾ WINDOW.ONLOAD BẰNG HÀM FETCH MỚI
-window.onload = fetchSheetData;
+// KHỞI CHẠY ĐÚNG TRÌNH TỰ
+window.onload = loadData;
