@@ -1,224 +1,92 @@
-/* --- VIETLOTT PRO V5.4 - FINAL POLISH --- */
-:root {
-    --bg-ios: #f2f2f7; 
-    --card-white: #ffffff; 
-    --ios-blue: #007aff; 
-    --text-dark: #1c1c1e;
-    
-    /* Màu nền nhạt cho các loại đá */
-    --ruby-bg: #ffebeb;
-    --sapphire-bg: #e3f2fd;
-    --gold-bg: #fff8e1;
-    --diamond-bg: #f3e5f5;
-    --emerald-bg: #e8f5e9;
+const CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQaiHVe1aFj0i1AN9S2-RQCMyrAMluwi_2cs6LSKURf4Elmg9TBpzhHekecCRR-qa2-TwOuXQyGNRMp/pub?gid=213374634&single=true&output=csv";
+
+const TOTAL = 55;
+const PICK = 6;
+const GEN = 5;
+
+let data = [];
+let disabled = new Set();
+
+async function loadData() {
+  try {
+    const res = await fetch(CSV_URL, { cache: "no-store" });
+    const text = await res.text();
+
+    const rows = text.trim().split("\n").map(r => r.split(","));
+    data = rows.slice(1).map(r => ({
+      numbers: r.slice(1, 7).map(Number),
+      power: Number(r[7])
+    }));
+
+    renderHeat();
+    renderLast();
+    setStatus("Sẵn sàng", true);
+  } catch {
+    setStatus("Lỗi tải dữ liệu", false);
+  }
 }
 
-body {
-    background: var(--bg-ios); 
-    color: var(--text-dark);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    margin: 0; 
-    padding-bottom: 50px; 
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    display: flex;
-    flex-direction: column;
-    align-items: center; 
-    min-height: 100vh;
+function setStatus(t, ok) {
+  const s = document.getElementById("status-text");
+  s.textContent = t;
+  s.classList.toggle("ready", ok);
 }
 
-/* HEADER */
-.ios-header {
-    background: rgba(255, 255, 255, 0.95); /* Tăng độ đậm nền chút */
-    backdrop-filter: blur(20px); 
-    -webkit-backdrop-filter: blur(20px);
-    position: sticky; top: 0; z-index: 1000; 
-    padding: 12px 15px; 
-    border-bottom: 0.5px solid #c6c6c8;
-    width: 100%;
-    max-width: 450px; 
-    box-sizing: border-box;
-}
-.header-content { display: flex; justify-content: space-between; align-items: center; }
-.draw-info h1 { margin: 0; font-size: 18px; font-weight: 800; color: var(--ios-blue); }
-.draw-info p { margin: 0; font-size: 11px; color: #8e8e93; }
+function renderHeat() {
+  const freq = Array(TOTAL + 1).fill(0);
+  data.forEach(d => d.numbers.forEach(n => freq[n]++));
 
-/* KẾT QUẢ MINI TRÊN HEADER (Đã phóng to & Đồng bộ màu Map) */
-.last-result-pills { display: flex; gap: 4px; } /* Tăng khoảng cách */
-.res-ball-mini {
-    width: 32px; height: 32px; /* TO LÊN */
-    border-radius: 50%;
-    font-size: 14px; font-weight: 800; /* CHỮ TO LÊN */
-    display: flex; align-items: center; justify-content: center;
-    /* Đồng bộ style với 'Kỳ trước' dưới Map (Màu vàng cam) */
-    background: #fff9c4; 
-    color: #d48806;
-    border: 1px solid #ffe082;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-.res-ball-mini.is-power { 
-    background: linear-gradient(135deg, #ffd700, #ffa000); 
-    color: #fff; 
-    box-shadow: 0 0 6px rgba(255, 204, 0, 0.6); 
-    border: 1px solid #fff;
-    font-size: 15px;
+  document.querySelectorAll(".cell").forEach(c => {
+    const n = +c.dataset.number;
+    c.className = "cell";
+
+    if (disabled.has(n)) return c.classList.add("off");
+    if (freq[n] === 0) c.classList.add("cold");
+    if (freq[n] > 10) c.classList.add("hot");
+  });
+
+  const last = data.at(-1);
+  last.numbers.forEach(n =>
+    document.querySelector(`[data-number="${n}"]`)?.classList.add("last")
+  );
+  document.querySelector(`[data-number="${last.power}"]`)?.classList.add("power");
 }
 
-/* LAYOUT CONTAINER */
-.ios-container { 
-    padding: 15px; 
-    width: 100%;
-    max-width: 450px; 
-    box-sizing: border-box;
+function renderLast() {
+  document.getElementById("last-draw").innerHTML =
+    data.at(-1).numbers.map(n =>
+      `<span class="ball">${String(n).padStart(2, "0")}</span>`
+    ).join("");
 }
 
-.ios-widget {
-    background: var(--card-white);
-    border-radius: 16px;
-    padding: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-}
-.widget-header {
-    font-size: 12px; font-weight: 700; color: #8e8e93;
-    text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;
+function generate() {
+  const pool = [];
+  for (let i = 1; i <= TOTAL; i++) if (!disabled.has(i)) pool.push(i);
+  return pool.sort(() => 0.5 - Math.random()).slice(0, PICK).sort((a, b) => a - b);
 }
 
-/* MAP SỐ */
-.grid-55 {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px; 
-}
+document.addEventListener("DOMContentLoaded", () => {
+  loadData();
 
-/* CELL SỐ BẢN ĐỒ */
-.num-cell {
-    aspect-ratio: 1;
-    background: #ffffff; 
-    border: 1px solid #d1d1d6; 
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 700; color: #1c1c1e; /* TĂNG FONT LÊN 15px */
-    cursor: pointer; position: relative;
-    transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-}
-.num-cell:active { transform: scale(0.92); box-shadow: none; }
-
-/* TRẠNG THÁI DISABLE (Đã bỏ gạch ngang, chỉ làm mờ) */
-.num-cell.is-disabled { 
-    background: #f2f2f7 !important; 
-    border: 1px dashed #c7c7cc !important; 
-    color: #c7c7cc !important; 
-    box-shadow: none !important;
-    opacity: 0.5;
-    text-decoration: none; /* BỎ GẠCH NGANG */
-    transform: scale(0.95); 
-}
-
-/* TRẠNG THÁI MÀU SẮC MAP */
-.num-cell.is-last-draw { 
-    border: 2px solid #ffcc00; color: #d48806; 
-    background: #fff9c4; box-shadow: 0 2px 6px rgba(255,204,0,0.4);
-}
-.num-cell.is-power-ball { 
-    background: linear-gradient(135deg, #ffd700, #ffb300) !important; 
-    color: white !important; 
-    box-shadow: 0 0 8px rgba(255, 193, 7, 0.6); 
-    border: none; 
-}
-.num-cell.is-hot { 
-    background: #ffebee; color: #d32f2f; border: 1px solid #ffcdd2; 
-    box-shadow: 0 2px 4px rgba(211, 47, 47, 0.1);
-} 
-.num-cell.is-cold { 
-    background: #e3f2fd; color: #1976d2; border: 1px solid #bbdefb; 
-    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.1);
-}
-
-.power-icon { position: absolute; top: -5px; right: -5px; font-size: 10px; z-index: 2; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); }
-
-/* LEGEND */
-.map-explanation {
-    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 15px; margin-top: 15px;
-    font-size: 11px; color: #636366; padding-top: 10px; border-top: 1px solid #f2f2f7;
-}
-.exp-item { display: flex; align-items: center; gap: 5px; }
-.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-.dot.default { background: #fff; border: 1px solid #d1d1d6; }
-.dot.ruby { background: #d32f2f; }
-.dot.sapphire { background: #1976d2; }
-.dot.gold { background: #ffcc00; border: 1px solid #eebb00; }
-.dot.power { background: linear-gradient(135deg, #ffd700, #ffa000); }
-.dot.disabled { background: #e5e5ea; border: 1px dashed #999; }
-
-/* KẾT QUẢ GỢI Ý */
-#results.hidden { display: none; }
-.result-row {
-    display: flex; align-items: center; justify-content: space-between;
-    background: #ffffff; padding: 12px 10px; border-radius: 16px; margin-bottom: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.02);
-    transition: transform 0.2s;
-}
-.animate-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards; }
-@keyframes popIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Nhãn Đá Quý */
-.gem-label {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    width: 60px; font-size: 9px; font-weight: 800; text-transform: uppercase;
-    color: #555; border-right: 1px solid #f2f2f7; padding-right: 8px; margin-right: 4px; flex-shrink: 0;
-}
-.gem-icon svg { width: 30px; height: 30px; margin-bottom: 3px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.15)); }
-
-/* Màu chữ nhãn */
-.gem-ruby { color: #d32f2f; }
-.gem-sapphire { color: #1565c0; }
-.gem-gold { color: #f57f17; } 
-.gem-diamond { color: #7b1fa2; }
-.gem-emerald { color: #2e7d32; }
-
-/* BI KẾT QUẢ (PHÓNG TO) */
-.nums-display { display: flex; gap: 5px; flex: 1; justify-content: center; }
-.res-ball {
-    width: 35px; height: 35px; /* TĂNG KÍCH THƯỚC */
-    border-radius: 10px; background: #fff;
-    color: #3a3a3c; display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 700; /* TĂNG FONT */
-    border: 1px solid #e5e5ea;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-/* Style kết quả khớp với Map */
-.res-ball.is-hot { background-color: #ffebee; color: #d32f2f; border-color: #ffcdd2; }
-.res-ball.is-cold { background-color: #e3f2fd; color: #1976d2; border-color: #bbdefb; }
-.res-ball.is-last-draw { background-color: #fff9c4; color: #f57f17; border-color: #fff59d; }
-
-/* Nút Copy */
-.btn-copy-line {
-    background: #f2f2f7; border: none; padding: 10px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: #8e8e93; transition: all 0.2s; border-radius: 12px;
-}
-.btn-copy-line:active { transform: scale(0.9); background: #e5e5ea; }
-.btn-copy-line.copied-success { color: #34c759; background: #e8f5e9; }
-
-/* RESPONSIVE PC */
-@media (min-width: 768px) {
-    body { background-color: #e5e5e5; padding-top: 40px; }
-    .ios-header { border-radius: 24px 24px 0 0; }
-    .ios-container {
-        background-color: #f2f2f7;
-        min-height: 85vh;
-        box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.3);
-        border-radius: 0 0 24px 24px;
-        padding-bottom: 40px;
+  document.querySelectorAll(".cell").forEach(c =>
+    c.onclick = () => {
+      const n = +c.dataset.number;
+      disabled.has(n) ? disabled.delete(n) : disabled.add(n);
+      renderHeat();
     }
-}
+  );
 
-.card-manual { border: 1px dashed var(--ios-blue); background: #f9f9fb; }
-.num-input-group { display: flex; justify-content: space-between; gap: 5px; margin: 15px 0; }
-.ios-num-box { width: 100%; aspect-ratio: 1; background: #fff; border: 1px solid #d1d1d6; border-radius: 10px; text-align: center; font-size: 18px; font-weight: 700; color: var(--ios-blue); outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-.ios-num-box:focus { border-color: var(--ios-blue); box-shadow: 0 0 0 3px rgba(0,122,255,0.15); }
-.ios-input-custom { background: #fff; border: 1px solid #d1d1d6; padding: 12px; border-radius: 12px; font-size: 18px; font-weight: 600; outline: none; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-.ios-btn-action { width: 100%; padding: 16px; border-radius: 14px; border: none; background: linear-gradient(135deg, #007aff, #005bb5); color: #fff; font-weight: 700; font-size: 17px; box-shadow: 0 4px 15px rgba(0,122,255,0.3); margin-top: 15px; cursor: pointer; }
-.ios-btn-action:active { transform: scale(0.98); }
+  document.getElementById("analyze-btn").onclick = () => {
+    const box = document.getElementById("result-list");
+    box.innerHTML = "";
+    for (let i = 0; i < GEN; i++) {
+      const r = document.createElement("div");
+      r.className = "result-row";
+      r.innerHTML = generate().map(n =>
+        `<span class="ball">${String(n).padStart(2, "0")}</span>`
+      ).join("");
+      box.appendChild(r);
+    }
+  };
+});
