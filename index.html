@@ -1,55 +1,52 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Vietlott Pro V5.6</title>
-    <link rel="stylesheet" href="style.css?v=5.6">
+  <meta charset="UTF-8" />
+  <title>Vietlott Analyzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<header class="ios-header">
-    <div class="header-content">
-        <div class="draw-info">
-            <h1 id="last-draw-id">Đang tải…</h1>
-            <p id="last-draw-date">Vui lòng đợi</p>
-        </div>
-        <div class="last-result-pills" id="last-result-numbers"></div>
+<div class="app">
+
+  <header class="header">
+    <div class="left">
+      <h1 id="ky-title">Đang tải...</h1>
+      <span id="ky-sub">Lỗi tải dữ liệu</span>
     </div>
-</header>
+    <div class="right" id="last-result"></div>
+  </header>
 
-<main class="ios-container">
+  <section class="heatmap">
+    <h2>BẢN ĐỒ NHIỆT (BẤM ĐỂ TẮT/MỞ SỐ)</h2>
+    <div id="number-grid" class="grid"></div>
 
-    <section class="ios-widget">
-        <div class="widget-header">BẢN ĐỒ NHIỆT (Bấm để Tắt / Mở số)</div>
-        <div id="number-grid" class="grid-55"></div>
+    <div class="legend">
+      <span><i class="ready"></i> Sẵn sàng</span>
+      <span><i class="hot"></i> Nóng</span>
+      <span><i class="cold"></i> Lạnh</span>
+      <span><i class="prev"></i> Kỳ trước</span>
+      <span><i class="power"></i> Power ⚡</span>
+      <span><i class="off"></i> Đã tắt</span>
+    </div>
+  </section>
 
-        <div class="map-explanation">
-            <div class="exp-item"><i class="dot default"></i> Sẵn sàng</div>
-            <div class="exp-item"><i class="dot ruby"></i> Nóng</div>
-            <div class="exp-item"><i class="dot sapphire"></i> Lạnh</div>
-            <div class="exp-item"><i class="dot gold"></i> Kỳ trước</div>
-            <div class="exp-item"><i class="dot power"></i> Power ⚡</div>
-            <div class="exp-item"><i class="dot disabled"></i> Đã tắt</div>
-        </div>
-    </section>
+  <button id="btn-generate" class="btn-main">
+    ✨ PHÂN TÍCH & SINH SỐ
+  </button>
 
-    <button onclick="generateFinalTickets()" class="ios-btn-action">
-        ✨ PHÂN TÍCH & SINH SỐ
-    </button>
+  <section class="result">
+    <div class="result-header">
+      <h3>KẾT QUẢ GỢI Ý</h3>
+      <button id="copy-all">COPY TẤT CẢ</button>
+    </div>
 
-    <section id="results" class="ios-widget hidden">
-        <div class="widget-header flex-between">
-            <span>KẾT QUẢ GỢI Ý</span>
-            <span onclick="copyAll()" class="copy-all">COPY TẤT CẢ</span>
-        </div>
-        <div id="ticketList"></div>
-    </section>
+    <div id="result-list"></div>
+  </section>
 
-</main>
+</div>
 
-<script src="engine.js?v=5.6"></script>
+<script src="engine.js"></script>
 </body>
 </html>
