@@ -190,3 +190,43 @@ body {
 .ball.disabled { background: #bdbdbd; color: #777; }
 
 .hidden { display: none; }
+/* ===============================
+   iOS DEVICE EMULATION ON DESKTOP
+   =============================== */
+@media (min-width: 768px) {
+
+    body {
+        background: #d1d1d6;
+        padding: 40px 0;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at top, #ffffff 0%, #d1d1d6 60%);
+        z-index: -1;
+    }
+
+    .ios-header,
+    .ios-container {
+        width: 390px;              /* iPhone 14 width */
+        max-width: 390px;
+        margin-left: auto;
+        margin-right: auto;
+        background: #f2f2f7;
+    }
+
+    .ios-header {
+        border-radius: 28px 28px 0 0;
+        box-shadow:
+            0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .ios-container {
+        border-radius: 0 0 28px 28px;
+        box-shadow:
+            0 30px 60px rgba(0,0,0,0.25);
+    }
+}
+
