@@ -1,150 +1,108 @@
-/* ===============================
-   GLOBAL STATE
-================================ */
-let db = [];                 // lịch sử từ CSV
-let historyDataStrings = []; // set string để check trùng
-let stats = {
-    hot: [],
-    cold: []
-};
-let disabledNumbers = [];
+const CSV_URL = "data.csv";
 
-/* ===============================
-   LOAD CSV (AUTO)
-================================ */
-fetch("data.csv")
-    .then(res => res.text())
-    .then(text => {
-        parseCSV(text);
-        calcStats();
-        renderHeatMap(); // UI cũ của bạn
-    });
+let draws = [];
+let freq = Array(56).fill(0);
+
+fetch(CSV_URL)
+  .then(res => {
+    if (!res.ok) throw new Error("CSV load fail");
+    return res.text();
+  })
+  .then(text => init(parseCSV(text)))
+  .catch(err => {
+    console.error(err);
+    document.getElementById("ky-title").innerText = "Lỗi tải dữ liệu";
+  });
 
 function parseCSV(text) {
-    const rows = text.trim().split("\n").slice(1);
+  const lines = text.trim().split("\n");
+  const header = lines.shift().split(",");
 
-    db = rows.map(r => {
-        const c = r.split(",");
-        return {
-            nums: [
-                +c[1], +c[2], +c[3],
-                +c[4], +c[5], +c[6]
-            ],
-            power: +c[7]
-        };
-    });
+  const idx = {
+    so1: header.indexOf("Số 1"),
+    so2: header.indexOf("Số 2"),
+    so3: header.indexOf("Số 3"),
+    so4: header.indexOf("Số 4"),
+    so5: header.indexOf("Số 5"),
+    so6: header.indexOf("Số 6"),
+    power: header.indexOf("Số Power"),
+    ky: header.indexOf("Kì"),
+  };
 
-    historyDataStrings = db.map(d =>
-        d.nums.slice().sort((a, b) => a - b).join(",")
-    );
-}
-
-/* ===============================
-   STATISTICS (HOT / COLD)
-================================ */
-function calcStats() {
-    const freq = Array(56).fill(0);
-
-    db.forEach(d => d.nums.forEach(n => freq[n]++));
-
-    const sorted = [...freq.entries()]
-        .slice(1)
-        .sort((a, b) => b[1] - a[1]);
-
-    stats.hot = sorted.slice(0, 10).map(x => x[0]);
-    stats.cold = sorted.slice(-10).map(x => x[0]);
-}
-
-/* ===============================
-   CORE BUTTON
-================================ */
-function onGenerateClick() {
-    generateFinalTickets();
-}
-
-/* ===============================
-   GENERATE TICKETS (MAP UI)
-================================ */
-function generateFinalTickets() {
-    const results = [];
-    let guard = 0;
-
-    while (results.length < 5 && guard < 5000) {
-        guard++;
-
-        let nums = [];
-        while (nums.length < 6) {
-            const r = Math.floor(Math.random() * 55) + 1;
-            if (
-                !nums.includes(r) &&
-                !disabledNumbers.includes(r)
-            ) nums.push(r);
-        }
-
-        nums.sort((a, b) => a - b);
-        const key = nums.join(",");
-
-        if (historyDataStrings.includes(key)) continue;
-
-        results.push(buildTicketObject(nums));
-    }
-
-    // 🚨 GIỮ NGUYÊN UI CŨ
-    renderSuggestionCards(results);
-}
-
-/* ===============================
-   BUILD OBJECT FOR UI
-================================ */
-function buildTicketObject(nums) {
+  return lines.map(l => {
+    const c = l.split(",");
     return {
-        tier: calcTier(nums),
-        nums: nums,
-
-        hot: nums.filter(n => stats.hot.includes(n)),
-        cold: nums.filter(n => stats.cold.includes(n)),
-        last: nums.filter(n => db[0]?.nums.includes(n)),
-        disabled: nums.filter(n => disabledNumbers.includes(n)),
-        power: []
+      ky: +c[idx.ky],
+      nums: [
+        +c[idx.so1],
+        +c[idx.so2],
+        +c[idx.so3],
+        +c[idx.so4],
+        +c[idx.so5],
+        +c[idx.so6]
+      ],
+      power: +c[idx.power]
     };
+  });
 }
 
-/* ===============================
-   TIER LOGIC (UI ICON)
-================================ */
-function calcTier(nums) {
-    const hotCount = nums.filter(n => stats.hot.includes(n)).length;
-    const coldCount = nums.filter(n => stats.cold.includes(n)).length;
+function init(data) {
+  draws = data;
 
-    if (hotCount >= 3) return "DIAMOND";
-    if (hotCount === 2) return "GOLD";
-    if (coldCount >= 2) return "SAPPHIRE";
-    return "RUBY";
+  draws.forEach(d =>
+    d.nums.forEach(n => freq[n]++)
+  );
+
+  renderLast(draws[draws.length - 1]);
+  renderGrid();
+  bindGenerate();
 }
 
-/* ===============================
-   HEAT MAP (UI CŨ)
-================================ */
-function renderHeatMap() {
-    for (let i = 1; i <= 55; i++) {
-        const el = document.querySelector(`[data-num="${i}"]`);
-        if (!el) continue;
+function renderLast(d) {
+  document.getElementById("ky-title").innerText = `Kỳ #${d.ky}`;
+  const box = document.getElementById("last-result");
+  box.innerHTML = "";
+  d.nums.concat(d.power).forEach(n => {
+    const b = document.createElement("div");
+    b.className = "ball";
+    b.innerText = n;
+    box.appendChild(b);
+  });
+}
 
-        el.classList.remove("hot", "cold");
+function renderGrid() {
+  const grid = document.getElementById("number-grid");
+  grid.innerHTML = "";
 
-        if (stats.hot.includes(i)) el.classList.add("hot");
-        else if (stats.cold.includes(i)) el.classList.add("cold");
+  for (let i = 1; i <= 55; i++) {
+    const d = document.createElement("div");
+    d.className = "num";
+    d.innerText = i;
+
+    if (freq[i] >= 20) d.classList.add("hot");
+    else if (freq[i] <= 5) d.classList.add("cold");
+
+    grid.appendChild(d);
+  }
+}
+
+function bindGenerate() {
+  document.getElementById("btn-generate").onclick = () => {
+    const res = document.getElementById("result-list");
+    res.innerHTML = "";
+
+    for (let i = 0; i < 5; i++) {
+      const set = randomSet();
+      const row = document.createElement("div");
+      row.className = "result-item";
+      row.innerHTML = set.map(n => `<div class="ball">${n}</div>`).join("");
+      res.appendChild(row);
     }
+  };
 }
 
-/* ===============================
-   TOGGLE NUMBER
-================================ */
-function toggleNumber(n) {
-    if (disabledNumbers.includes(n)) {
-        disabledNumbers = disabledNumbers.filter(x => x !== n);
-    } else {
-        disabledNumbers.push(n);
-    }
-    renderHeatMap();
+function randomSet() {
+  const pool = [...Array(55).keys()].slice(1);
+  pool.sort(() => 0.5 - Math.random());
+  return pool.slice(0, 6).sort((a, b) => a - b);
 }
