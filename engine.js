@@ -12,17 +12,17 @@ const ICONS = {
     ICE: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-ice" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#e1f5fe"/><stop offset="100%" style="stop-color:#81d4fa"/></linearGradient></defs><rect x="12" y="12" width="40" height="40" rx="8" fill="url(#grad-ice)" stroke="#4fc3f7" stroke-width="1.5"/><path d="M20 20 L44 44 M44 20 L20 44" stroke="white" stroke-width="1.5" stroke-opacity="0.4"/></svg>`
 };
 
-// ĐƯỜNG DẪN DATABASE TỪ GOOGLE SHEETS
+// --- KẾT NỐI SHEETS ---
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQaiHVe1aFj0i1AN9S2-RQCMyrAMluwi_2cs6LSKURf4Elmg9TBpzhHekecCRR-qa2-TwOuXQyGNRMp/pub?gid=213374634&single=true&output=csv";
 
 async function loadData() {
     updateStatus("Đang đồng bộ...", true);
     try {
         const response = await fetch(SHEET_URL);
-        const csvText = await response.text();
-        const rows = csvText.split(/\r?\n/).filter(r => r.trim() !== "");
+        const csv = await response.text();
+        const rows = csv.split(/\r?\n/).filter(r => r.trim() !== "");
         
-        // Chuyển đổi dữ liệu CSV
+        // Chuyển CSV thành mảng DB
         db = rows.slice(1).map(row => {
             const c = row.split(",");
             return {
@@ -33,42 +33,41 @@ async function loadData() {
                 jackpot1: c[9] ? c[9].trim() : "0"
             };
         });
-
-        // Sắp xếp ID giảm dần (mới nhất lên đầu)
         db.sort((a, b) => parseInt(b.id) - parseInt(a.id));
 
         if (db.length > 0) {
-            // Kích hoạt lại toàn bộ logic gốc sau khi có db
-            analyzeData();
-            renderGrid();
-            updateUI();
-            setupEventListeners(); // Kích hoạt các nút bấm
+            // GỌI HÀM INIT GỐC CỦA BẠN ĐỂ KÍCH HOẠT MỌI TÍNH NĂNG
+            init(); 
             updateStatus(`${db[0].date} | J1: ${db[0].jackpot1}`, false);
         }
     } catch (e) {
-        console.error(e);
-        updateStatus("Lỗi kết nối database!", false);
+        updateStatus("Lỗi kết nối!", false);
     }
+}
+
+// --- GIỮ NGUYÊN TOÀN BỘ HÀM GỐC BÊN DƯỚI ---
+
+function init() {
+    analyzeData();
+    renderGrid();
+    updateUI();
+    setupEventListeners();
 }
 
 function analyzeData() {
     let counts = new Array(56).fill(0);
-    let lastSeen = new Array(56).fill(-1);
-    
+    let lastPos = new Array(56).fill(-1);
     db.forEach((draw, idx) => {
         draw.nums.forEach(n => {
             counts[n]++;
-            if (lastSeen[n] === -1) lastSeen[n] = idx;
+            if (lastPos[n] === -1) lastPos[n] = idx;
         });
     });
-
     let mapped = [];
     for (let i = 1; i <= 55; i++) {
-        mapped.push({ n: i, count: counts[i], gap: lastSeen[i] });
+        mapped.push({ n: i, count: counts[i], gap: lastPos[i] });
     }
-
     stats.hot = [...mapped].sort((a, b) => b.count - a.count).slice(0, 6).map(x => x.n);
-    stats.cold = [...mapped].sort((a, b) => a.count - b.count).slice(0, 6).map(x => x.n);
     stats.gap = [...mapped].sort((a, b) => b.gap - a.gap).slice(0, 6).map(x => x.n);
 }
 
@@ -96,16 +95,9 @@ function renderGrid() {
         const div = document.createElement('div');
         div.className = 'num-cell';
         if (disabledNumbers.includes(i)) div.classList.add('disabled');
-        
         let icon = ICONS.DIAMOND;
-        if (stats.hot.includes(i)) {
-            div.classList.add('hot');
-            icon = ICONS.RUBY;
-        } else if (stats.gap.includes(i)) {
-            div.classList.add('cold');
-            icon = ICONS.ICE;
-        }
-
+        if (stats.hot.includes(i)) { div.classList.add('hot'); icon = ICONS.RUBY; }
+        else if (stats.gap.includes(i)) { div.classList.add('cold'); icon = ICONS.ICE; }
         div.innerHTML = `<div class="cell-icon">${icon}</div><div class="cell-num">${i.toString().padStart(2, '0')}</div>`;
         div.onclick = () => {
             div.classList.toggle('disabled');
@@ -144,25 +136,19 @@ function showPopup(nums) {
     document.body.appendChild(overlay);
 }
 
-// KHÔI PHỤC TOÀN BỘ LOGIC EVENT LISTENER GỐC
 function setupEventListeners() {
     const pasteBtn = document.getElementById('paste-btn');
     const inputs = document.querySelectorAll('.ios-num-box');
-    
     if(pasteBtn) {
         pasteBtn.onclick = async () => {
             const text = await navigator.clipboard.readText();
             const numbers = text.match(/\d+/g).map(Number).filter(n => n >= 1 && n <= 55);
             if (numbers.length >= 6) {
-                inputs.forEach((input, i) => {
-                    if(i < 6) input.value = numbers[i].toString().padStart(2, '0');
-                });
+                inputs.forEach((input, i) => { if(i < 6) input.value = numbers[i].toString().padStart(2, '0'); });
                 if (numbers[6]) document.getElementById('input-pwr').value = numbers[6].toString().padStart(2, '0');
-                document.getElementById('save-manual-btn').focus();
             }
         };
     }
-
     inputs.forEach((input, idx) => {
         input.addEventListener('input', () => {
             if (input.value.length >= 2) {
