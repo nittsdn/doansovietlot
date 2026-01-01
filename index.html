@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Vietlott Pro V5.4 - Final Polish</title>
+    <link rel="stylesheet" href="style.css?v=5.4">
+</head>
+<body>
+    <header class="ios-header">
+        <div class="header-content">
+            <div class="draw-info">
+                <h1 id="last-draw-id">Đang tải...</h1>
+                <p id="last-draw-date">Vui lòng đợi</p>
+            </div>
+            <div class="last-result-pills" id="last-result-numbers"></div>
+        </div>
+    </header>
+
+    <main class="ios-container">
+        <section class="ios-widget">
+            <div class="widget-header">BẢN ĐỒ NHIỆT (Bấm để Tắt/Mở số)</div>
+            <div id="number-grid" class="grid-55"></div>
+            <div class="map-explanation">
+                <div class="exp-item"><i class="dot default"></i> <span>Sẵn sàng</span></div>
+                <div class="exp-item"><i class="dot ruby"></i> <span>Nóng</span></div>
+                <div class="exp-item"><i class="dot sapphire"></i> <span>Lạnh</span></div>
+                <div class="exp-item"><i class="dot gold"></i> <span>Kỳ trước</span></div>
+                <div class="exp-item"><i class="dot power"></i> <span>Power ⚡</span></div>
+                <div class="exp-item"><i class="dot disabled"></i> <span>Đã Tắt</span></div>
+            </div>
+        </section>
+
+        <button onclick="generateFinalTickets()" class="ios-btn-action">
+            ✨ PHÂN TÍCH & SINH SỐ
+        </button>
+
+        <div id="results" class="hidden">
+            <div class="widget-header" style="display:flex; justify-content:space-between; margin-top:15px;">
+                <span>KẾT QUẢ GỢI Ý</span>
+                <span onclick="copyAll()" style="color:#007aff; cursor:pointer;">Copy Tất Cả</span>
+            </div>
+            <div id="ticketList"></div>
+        </div>
+
+        <section class="ios-widget card-manual" style="margin-top: 30px;">
+            <div class="widget-header">CẬP NHẬT KẾT QUẢ MỚI NHẤT</div>
+            <div class="input-item">
+                <label>Dán chuỗi số hoặc nhập tay</label>
+                <div class="num-input-group">
+                    <input type="tel" class="ios-num-box" maxlength="2" placeholder="-">
+                    <input type="tel" class="ios-num-box" maxlength="2" placeholder="-">
+                    <input type="tel" class="ios-num-box" maxlength="2" placeholder="-">
+                    <input type="tel" class="ios-num-box" maxlength="2" placeholder="-">
+                    <input type="tel" class="ios-num-box" maxlength="2" placeholder="-">
+                    <input type="tel" class="ios-num-box" maxlength="2" placeholder="-">
+                </div>
+            </div>
+            <div class="input-item" style="margin-top:10px; display:flex; align-items:center; gap:10px;">
+                <div style="flex:1">
+                    <label>Số Power</label>
+                    <input type="tel" id="input-pwr" class="ios-input-custom" maxlength="2" placeholder="00" style="width: 60px; text-align: center; border-color: #ffcc00; color: #d48806;">
+                </div>
+                <div style="flex:1">
+                     <button id="save-manual-btn" class="ios-btn-action" style="font-size:14px; padding:10px; margin-top:0;">LƯU KẾT QUẢ</button>
+                </div>
+            </div>
+            <p style="font-size:10px; color:#999; margin-top:10px; text-align:center;">
+                *Mẹo: Copy dãy số (VD: 01 02 03...) rồi dán vào ô đầu tiên.
+            </p>
+        </section>
+    </main>
+    <script src="engine.js?v=5.4"></script>
+</body>
+</html>
