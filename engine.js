@@ -1,129 +1,150 @@
-let db = [];
-let stats = { hot: [], cold: [] };
-let historyDataStrings = [];
+/* ===============================
+   GLOBAL STATE
+================================ */
+let db = [];                 // lịch sử từ CSV
+let historyDataStrings = []; // set string để check trùng
+let stats = {
+    hot: [],
+    cold: []
+};
 let disabledNumbers = [];
 
-const CSV_URL =
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vQaiHVe1aFj0i1AN9S2-RQCMyrAMluwi_2cs6LSKURf4Elmg9TBpzhHekecCRR-qa2-TwOuXQyGNRMp/pub?gid=213374634&single=true&output=csv";
-
-/* ===== LOAD ===== */
-async function loadData() {
-    const res = await fetch(CSV_URL + "&_=" + Date.now());
-    const text = await res.text();
-    const lines = text.trim().split(/\r?\n/);
-
-    db = [];
-    for (let i = 1; i < lines.length; i++) {
-        const c = lines[i].split(",");
-        const nums = c.slice(1,7).map(Number).sort((a,b)=>a-b);
-        const pwr = +c[7];
-        const date = c[8];
-        if (nums.some(isNaN)) continue;
-        db.push({ nums, pwr, date });
-    }
-    db.reverse();
-
-    analyzeData();
-    renderHeader();
-    renderMap();
-}
-
-function analyzeData() {
-    let freq = Array(56).fill(0);
-    historyDataStrings = [];
-
-    db.forEach(d=>{
-        historyDataStrings.push(d.nums.join(","));
-        d.nums.forEach(n=>freq[n]++);
+/* ===============================
+   LOAD CSV (AUTO)
+================================ */
+fetch("data.csv")
+    .then(res => res.text())
+    .then(text => {
+        parseCSV(text);
+        calcStats();
+        renderHeatMap(); // UI cũ của bạn
     });
 
-    stats.hot = [...freq.entries()].sort((a,b)=>b[1]-a[1]).slice(1,15).map(x=>x[0]);
-    stats.cold = [...freq.entries()].filter(x=>x[1]<=2).map(x=>x[0]);
-}
+function parseCSV(text) {
+    const rows = text.trim().split("\n").slice(1);
 
-/* ===== UI ===== */
-function renderHeader() {
-    const last = db[0];
-    document.getElementById("last-draw-id").innerText = "Kỳ mới nhất";
-    document.getElementById("last-draw-date").innerText = last.date;
-
-    const box = document.getElementById("last-result-numbers");
-    box.innerHTML = "";
-    last.nums.forEach(n=>{
-        const s=document.createElement("span");
-        s.textContent=n;
-        box.appendChild(s);
+    db = rows.map(r => {
+        const c = r.split(",");
+        return {
+            nums: [
+                +c[1], +c[2], +c[3],
+                +c[4], +c[5], +c[6]
+            ],
+            power: +c[7]
+        };
     });
+
+    historyDataStrings = db.map(d =>
+        d.nums.slice().sort((a, b) => a - b).join(",")
+    );
 }
 
-function renderMap() {
-    const grid = document.getElementById("number-grid");
-    grid.innerHTML="";
-    const last=db[0];
-    for(let i=1;i<=55;i++){
-        const d=document.createElement("div");
-        d.className="num-cell";
-        d.textContent=i;
-        if(stats.hot.includes(i)) d.classList.add("is-hot");
-        if(stats.cold.includes(i)) d.classList.add("is-cold");
-        if(last.nums.includes(i)) d.classList.add("is-last-draw");
-        d.onclick=()=>toggle(i);
-        grid.appendChild(d);
-    }
+/* ===============================
+   STATISTICS (HOT / COLD)
+================================ */
+function calcStats() {
+    const freq = Array(56).fill(0);
+
+    db.forEach(d => d.nums.forEach(n => freq[n]++));
+
+    const sorted = [...freq.entries()]
+        .slice(1)
+        .sort((a, b) => b[1] - a[1]);
+
+    stats.hot = sorted.slice(0, 10).map(x => x[0]);
+    stats.cold = sorted.slice(-10).map(x => x[0]);
 }
 
-function toggle(n){
-    disabledNumbers.includes(n)
-        ? disabledNumbers.splice(disabledNumbers.indexOf(n),1)
-        : disabledNumbers.push(n);
-    renderMap();
+/* ===============================
+   CORE BUTTON
+================================ */
+function onGenerateClick() {
+    generateFinalTickets();
 }
 
-/* ===== GENERATE ===== */
+/* ===============================
+   GENERATE TICKETS (MAP UI)
+================================ */
 function generateFinalTickets() {
-    const tickets=[];
-    while(tickets.length<5){
-        let t=[];
-        while(t.length<6){
-            const r=Math.floor(Math.random()*55)+1;
-            if(!t.includes(r)&&!disabledNumbers.includes(r)) t.push(r);
+    const results = [];
+    let guard = 0;
+
+    while (results.length < 5 && guard < 5000) {
+        guard++;
+
+        let nums = [];
+        while (nums.length < 6) {
+            const r = Math.floor(Math.random() * 55) + 1;
+            if (
+                !nums.includes(r) &&
+                !disabledNumbers.includes(r)
+            ) nums.push(r);
         }
-        t.sort((a,b)=>a-b);
-        if(!historyDataStrings.includes(t.join(","))) tickets.push(t);
+
+        nums.sort((a, b) => a - b);
+        const key = nums.join(",");
+
+        if (historyDataStrings.includes(key)) continue;
+
+        results.push(buildTicketObject(nums));
     }
-    renderTickets(tickets);
+
+    // 🚨 GIỮ NGUYÊN UI CŨ
+    renderSuggestionCards(results);
 }
 
-function renderTickets(tickets){
-    const list=document.getElementById("ticketList");
-    list.innerHTML="";
-    tickets.forEach((nums,i)=>{
-        const tier=i===0?"diamond":i<3?"gold":"ruby";
-        const card=document.createElement("div");
-        card.className="ticket-card "+tier;
+/* ===============================
+   BUILD OBJECT FOR UI
+================================ */
+function buildTicketObject(nums) {
+    return {
+        tier: calcTier(nums),
+        nums: nums,
 
-        const label=document.createElement("div");
-        label.className="ticket-label";
-        label.innerText=tier.toUpperCase();
-        card.appendChild(label);
-
-        const balls=document.createElement("div");
-        balls.className="ticket-balls";
-
-        nums.forEach(n=>{
-            const b=document.createElement("span");
-            b.className="ball";
-            b.innerText=n;
-            if(stats.hot.includes(n)) b.classList.add("hot");
-            if(stats.cold.includes(n)) b.classList.add("cold");
-            if(disabledNumbers.includes(n)) b.classList.add("disabled");
-            balls.appendChild(b);
-        });
-
-        card.appendChild(balls);
-        list.appendChild(card);
-    });
-    document.getElementById("results").classList.remove("hidden");
+        hot: nums.filter(n => stats.hot.includes(n)),
+        cold: nums.filter(n => stats.cold.includes(n)),
+        last: nums.filter(n => db[0]?.nums.includes(n)),
+        disabled: nums.filter(n => disabledNumbers.includes(n)),
+        power: []
+    };
 }
 
-document.addEventListener("DOMContentLoaded", loadData);
+/* ===============================
+   TIER LOGIC (UI ICON)
+================================ */
+function calcTier(nums) {
+    const hotCount = nums.filter(n => stats.hot.includes(n)).length;
+    const coldCount = nums.filter(n => stats.cold.includes(n)).length;
+
+    if (hotCount >= 3) return "DIAMOND";
+    if (hotCount === 2) return "GOLD";
+    if (coldCount >= 2) return "SAPPHIRE";
+    return "RUBY";
+}
+
+/* ===============================
+   HEAT MAP (UI CŨ)
+================================ */
+function renderHeatMap() {
+    for (let i = 1; i <= 55; i++) {
+        const el = document.querySelector(`[data-num="${i}"]`);
+        if (!el) continue;
+
+        el.classList.remove("hot", "cold");
+
+        if (stats.hot.includes(i)) el.classList.add("hot");
+        else if (stats.cold.includes(i)) el.classList.add("cold");
+    }
+}
+
+/* ===============================
+   TOGGLE NUMBER
+================================ */
+function toggleNumber(n) {
+    if (disabledNumbers.includes(n)) {
+        disabledNumbers = disabledNumbers.filter(x => x !== n);
+    } else {
+        disabledNumbers.push(n);
+    }
+    renderHeatMap();
+}
