@@ -1,175 +1,190 @@
 /* * VIETLOTT PRO V5.4 - FINAL ENGINE
- * FIXED: Bọc toàn bộ code "chạy rông" vào init để tránh lỗi db[0] undefined
+ * Data source: Google Sheets CSV (public)
  */
 
 let db = [], stats = { hot: [], cold: [], gap: [] };
 let historyDataStrings = []; 
 let disabledNumbers = [];
 
+/* ================= ICONS & GEMS ================= */
+
 const ICONS = {
-    DIAMOND: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-dia" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#e0f7fa"/><stop offset="100%" style="stop-color:#b2ebf2"/></linearGradient></defs><path d="M32 2 L2 24 L32 62 L62 24 L32 2 Z" fill="url(#grad-dia)" stroke="#00bcd4" stroke-width="1.5"/><path d="M2 24 L62 24 M12 24 L32 2 L52 24 M32 62 L12 24 M32 62 L52 24" stroke="#00acc1" stroke-width="1" stroke-opacity="0.6"/><path d="M20 24 L32 36 L44 24" fill="white" fill-opacity="0.4"/></svg>`,
-    RUBY: `<svg viewBox="0 0 64 64" fill="none"><defs><radialGradient id="grad-ruby" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:#ff5252"/><stop offset="100%" style="stop-color:#b71c1c"/></radialGradient></defs><path d="M32 4 L10 24 L32 60 L54 24 Z" fill="url(#grad-ruby)"/><path d="M10 24 L54 24 M32 4 L32 60" stroke="#ff8a80" stroke-width="0.5" stroke-opacity="0.5"/></svg>`,
-    ICE: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-ice" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#e1f5fe"/><stop offset="100%" style="stop-color:#81d4fa"/></linearGradient></defs><rect x="12" y="12" width="40" height="40" rx="8" fill="url(#grad-ice)" stroke="#4fc3f7" stroke-width="1.5"/><path d="M20 20 L44 44 M44 20 L20 44" stroke="white" stroke-width="1.5" stroke-opacity="0.4"/></svg>`
+    DIAMOND: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-dia" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#e0f7fa"/><stop offset="100%" style="stop-color:#b2ebf2"/></linearGradient></defs><path d="M32 2 L2 24 L32 62 L62 24 L32 2 Z" fill="url(#grad-dia)" stroke="#00bcd4" stroke-width="1.5"/><path d="M2 24 L62 24 M12 24 L32 2 L52 24 M32 62 L12 24 M32 62 L52 24" stroke="#00acc1" stroke-width="1" stroke-opacity="0.6"/></svg>`,
+    RUBY: `<svg viewBox="0 0 64 64" fill="none"><defs><radialGradient id="grad-ruby" cx="30%" cy="30%" r="70%"><stop offset="0%" style="stop-color:#ff8a80"/><stop offset="100%" style="stop-color:#c62828"/></radialGradient></defs><path d="M32 6 L58 24 L48 58 H16 L6 24 L32 6 Z" fill="url(#grad-ruby)" stroke="#b71c1c" stroke-width="1"/></svg>`,
+    SAPPHIRE: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-sapphire" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#42a5f5"/><stop offset="100%" style="stop-color:#0d47a1"/></linearGradient></defs><rect x="10" y="10" width="44" height="44" rx="12" fill="url(#grad-sapphire)"/></svg>`,
+    GOLD: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-gold" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#ffe082"/><stop offset="100%" style="stop-color:#ff6f00"/></linearGradient></defs><path d="M12 20 L4 46 H60 L52 20 Z" fill="url(#grad-gold)"/></svg>`,
+    EMERALD: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-em" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#66bb6a"/><stop offset="100%" style="stop-color:#1b5e20"/></linearGradient></defs><rect x="12" y="12" width="40" height="40" rx="6" fill="url(#grad-em)"/></svg>`
 };
 
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQaiHVe1aFj0i1AN9S2-RQCMyrAMluwi_2cs6LSKURf4Elmg9TBpzhHekecCRR-qa2-TwOuXQyGNRMp/pub?gid=213374634&single=true&output=csv";
+const GEMS = {
+    RUBY: { name: "RUBY", icon: ICONS.RUBY, color: "gem-ruby" },
+    SAPPHIRE: { name: "SAPPHIRE", icon: ICONS.SAPPHIRE, color: "gem-sapphire" },
+    GOLD: { name: "GOLD", icon: ICONS.GOLD, color: "gem-gold" },
+    DIAMOND: { name: "DIAMOND", icon: ICONS.DIAMOND, color: "gem-diamond" },
+    EMERALD: { name: "EMERALD", icon: ICONS.EMERALD, color: "gem-emerald" }
+};
+
+const STORAGE_KEY = 'vietlott_pro_v5_storage';
+
+/* ================= DATA LOAD ================= */
+
+const CSV_URL =
+'https://docs.google.com/spreadsheets/d/e/2PACX-1vQaiHVe1aFj0i1AN9S2-RQCMyrAMluwi_2cs6LSKURf4Elmg9TBpzhHekecCRR-qa2-TwOuXQyGNRMp/pub?gid=213374634&single=true&output=csv';
 
 async function loadData() {
-    updateStatus("Đồng bộ dữ liệu...", true);
+    updateStatus("Đang tải dữ liệu...", true);
     try {
-        const response = await fetch(SHEET_URL);
-        const csv = await response.text();
-        const rows = csv.split(/\r?\n/).filter(r => r.trim() !== "");
-        
-        db = rows.slice(1).map(row => {
-            const c = row.split(",");
-            return {
-                id: c[0].trim(),
-                nums: [parseInt(c[1]), parseInt(c[2]), parseInt(c[3]), parseInt(c[4]), parseInt(c[5]), parseInt(c[6])].sort((a,b)=>a-b),
-                pwr: parseInt(c[7]),
-                date: c[8].trim(),
-                jackpot1: c[9] ? c[9].trim() : "0"
-            };
-        });
-        db.sort((a, b) => parseInt(b.id) - parseInt(a.id));
-        historyDataStrings = db.map(item => item.nums.join(' '));
+        const res = await fetch(CSV_URL + '&v=' + Date.now());
+        if (!res.ok) throw new Error("Fetch CSV lỗi");
 
-        if (db.length > 0) {
-            analyzeData();
-            renderGrid();
-            updateUI();
-            setupEventsAfterLoad(); // Gọi hàm bọc các nút bấm
-            updateStatus(`${db[0].date} | J1: ${db[0].jackpot1}`, false);
-        }
+        const text = await res.text();
+        const lines = text.trim().split(/\r?\n/);
+
+        db = lines.slice(1).map(line => {
+            const p = line.split(',');
+            if (p.length < 9) return null;
+
+            const id = p[0].trim();
+            const nums = [
+                Number(p[1]), Number(p[2]), Number(p[3]),
+                Number(p[4]), Number(p[5]), Number(p[6])
+            ].sort((a,b)=>a-b);
+
+            const pwr = Number(p[7]);
+            const date = p[8];
+
+            if (nums.some(isNaN) || isNaN(pwr)) return null;
+            return { id, nums, pwr, date };
+        }).filter(Boolean).reverse();
+
+        if (!db.length) throw new Error("CSV trống");
+
+        analyzeData();
+        renderHeaderInfo();
+        renderMap();
+        initSmartPaste();
+
+        updateStatus(`Sẵn sàng (Kỳ #${db[0].id})`, false);
     } catch (e) {
-        updateStatus("Lỗi kết nối database!", false);
+        console.error(e);
+        updateStatus("Lỗi tải dữ liệu", false);
     }
 }
 
-// BỌC TOÀN BỘ LOGIC "CHẠY RÔNG" CỦA BẢN GỐC VÀO ĐÂY
-function setupEventsAfterLoad() {
-    const pasteBtn = document.getElementById('paste-btn');
-    const inputs = document.querySelectorAll('.ios-num-box');
-    const saveBtn = document.getElementById('save-manual-btn');
+/* ================= ANALYSIS ================= */
 
-    if(pasteBtn) {
-        pasteBtn.onclick = async () => {
-            const text = await navigator.clipboard.readText();
-            const numbers = text.match(/\d+/g).map(Number).filter(n => n >= 1 && n <= 55);
-            if (numbers.length >= 6) {
-                inputs.forEach((input, i) => { if(i < 6) input.value = numbers[i].toString().padStart(2, '0'); });
-                if (numbers[6]) document.getElementById('input-pwr').value = numbers[6].toString().padStart(2, '0');
-                if(saveBtn) saveBtn.focus();
-            }
-        };
-    }
-
-    inputs.forEach((input, idx) => {
-        input.addEventListener('input', () => {
-            if (input.value.length >= 2) {
-                if (idx < 5) inputs[idx+1].focus();
-                else document.getElementById('input-pwr').focus();
-            }
-        });
-    });
-
-    if(saveBtn) {
-        saveBtn.onclick = () => {
-            const nums = Array.from(inputs).map(i => parseInt(i.value));
-            const pwrVal = parseInt(document.getElementById('input-pwr').value);
-            if (nums.some(isNaN) || isNaN(pwrVal)) { alert("Vui lòng nhập đủ số!"); return; }
-            // Logic lấy ID tiếp theo an toàn sau khi db đã load
-            const nextId = (parseInt(db[0].id) + 1).toString();
-            alert("Đã ghi nhận bộ số cho kỳ #" + nextId);
-        };
-    }
-}
-
-// --- CÁC HÀM CÒN LẠI GIỮ NGUYÊN 100% ---
 function analyzeData() {
-    let counts = new Array(56).fill(0);
-    let lastPos = new Array(56).fill(-1);
-    historyDataStrings.forEach((str, idx) => {
-        const nums = str.split(' ').map(Number);
-        nums.forEach(n => {
-            counts[n]++;
-            if (lastPos[n] === -1) lastPos[n] = idx;
-        });
-    });
-    let mapped = [];
+    let freq = Array(56).fill(0);
+    let lastSeen = Array(56).fill(-1);
+
+    historyDataStrings = db.map(d => d.nums.join(','));
+
+    db.slice(0, 50).forEach(draw =>
+        draw.nums.forEach(n => freq[n]++)
+    );
+
     for (let i = 1; i <= 55; i++) {
-        mapped.push({ n: i, count: counts[i], gap: lastPos[i] });
+        const idx = db.findIndex(d => d.nums.includes(i));
+        lastSeen[i] = idx === -1 ? 999 : idx;
     }
-    stats.hot = [...mapped].sort((a, b) => b.count - a.count).slice(0, 6).map(x => x.n);
-    stats.gap = [...mapped].sort((a, b) => b.gap - a.gap).slice(0, 6).map(x => x.n);
+
+    let arr = [];
+    for (let i = 1; i <= 55; i++)
+        arr.push({ n: i, f: freq[i], gap: lastSeen[i] });
+
+    arr.sort((a,b)=>b.f - a.f);
+
+    stats.hot = arr.slice(0,14).map(x=>x.n);
+    stats.cold = arr.filter(x=>x.gap>=5 && x.gap<=15).map(x=>x.n);
+    stats.gap = lastSeen;
 }
 
-function updateUI() {
-    const last = db[0];
-    document.getElementById('last-draw-id').innerText = "Kỳ #" + last.id;
-    const container = document.getElementById('last-result-numbers');
-    container.innerHTML = '';
-    last.nums.forEach(n => {
-        const span = document.createElement('span');
-        span.className = 'pill-num';
-        span.innerText = n.toString().padStart(2, '0');
-        container.appendChild(span);
-    });
-    const pwrSpan = document.createElement('span');
-    pwrSpan.className = 'pill-num pwr';
-    pwrSpan.innerText = last.pwr.toString().padStart(2, '0');
-    container.appendChild(pwrSpan);
+/* ================= MAP & UI ================= */
+
+function toggleNumber(n) {
+    disabledNumbers.includes(n)
+        ? disabledNumbers.splice(disabledNumbers.indexOf(n),1)
+        : disabledNumbers.push(n);
+    renderMap();
 }
 
-function renderGrid() {
+function renderMap() {
     const grid = document.getElementById('number-grid');
-    if(!grid) return;
+    if (!grid) return;
     grid.innerHTML = '';
+
+    const last = db[0];
     for (let i = 1; i <= 55; i++) {
-        const div = document.createElement('div');
-        div.className = 'num-cell';
-        if (disabledNumbers.includes(i)) div.classList.add('disabled');
-        let icon = ICONS.DIAMOND;
-        if (stats.hot.includes(i)) { div.classList.add('hot'); icon = ICONS.RUBY; }
-        else if (stats.gap.includes(i)) { div.classList.add('cold'); icon = ICONS.ICE; }
-        div.innerHTML = `<div class="cell-icon">${icon}</div><div class="cell-num">${i.toString().padStart(2, '0')}</div>`;
-        div.onclick = () => {
-            div.classList.toggle('disabled');
-            if (div.classList.contains('disabled')) disabledNumbers.push(i);
-            else disabledNumbers = disabledNumbers.filter(x => x !== i);
-        };
-        grid.appendChild(div);
+        const d = document.createElement('div');
+        d.className = 'num-cell';
+        d.innerText = i;
+
+        if (disabledNumbers.includes(i)) d.classList.add('is-disabled');
+        else if (i === last.pwr) d.classList.add('is-power-ball');
+        else if (last.nums.includes(i)) d.classList.add('is-last-draw');
+        else if (stats.hot.includes(i)) d.classList.add('is-hot');
+        else if (stats.cold.includes(i)) d.classList.add('is-cold');
+
+        d.onclick = () => toggleNumber(i);
+        grid.appendChild(d);
     }
 }
 
-function generateSystem() {
-    const pool = [];
-    for (let i = 1; i <= 55; i++) if (!disabledNumbers.includes(i)) pool.push(i);
-    if (pool.length < 6) return;
-    const res = [];
-    const tempPool = [...pool];
-    while (res.length < 6) {
-        const idx = Math.floor(Math.random() * tempPool.length);
-        res.push(tempPool.splice(idx, 1)[0]);
+/* ================= TICKET LOGIC ================= */
+
+function isRedZone(ticket) {
+    const t = ticket.sort((a,b)=>a-b);
+    const sum = t.reduce((a,b)=>a+b,0);
+    if (sum < 90 || sum > 240) return false;
+    if ([0,6].includes(t.filter(n=>n%2===0).length)) return false;
+    if (historyDataStrings.includes(t.join(','))) return false;
+
+    let c=1,m=1;
+    for(let i=0;i<5;i++){c=(t[i+1]===t[i]+1)?c+1:1;m=Math.max(m,c);}
+    return m<4;
+}
+
+function generateTicket() {
+    const pool = Array.from({length:55},(_,i)=>i+1)
+        .filter(n=>!disabledNumbers.includes(n));
+
+    for(let k=0;k<500;k++){
+        let t=[];
+        while(t.length<6){
+            let r=pool[Math.floor(Math.random()*pool.length)];
+            if(!t.includes(r)) t.push(r);
+        }
+        if(isRedZone(t)) return t.sort((a,b)=>a-b);
     }
-    showPopup(res.sort((a, b) => a - b));
+    return pool.slice(0,6);
 }
 
-function showPopup(nums) {
-    const overlay = document.createElement('div');
-    overlay.className = 'ios-overlay';
-    overlay.onclick = () => document.body.removeChild(overlay);
-    const modal = document.createElement('div');
-    modal.className = 'ios-modal';
-    modal.onclick = (e) => e.stopPropagation();
-    modal.innerHTML = `<h3>GỢI Ý KỲ TIẾP THEO</h3><div class="modal-nums">${nums.map(n => `<span class="pill-num">${n.toString().padStart(2, '0')}</span>`).join('')}</div><button class="ios-btn-action" onclick="this.parentElement.parentElement.click()">XÁC NHẬN</button>`;
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
+/* ================= HEADER ================= */
+
+function renderHeaderInfo() {
+    const last = db[0];
+    document.getElementById('last-draw-id').innerText = `Kỳ #${last.id}`;
+    document.getElementById('last-draw-date').innerText = last.date;
+
+    const box = document.getElementById('last-result-numbers');
+    box.innerHTML='';
+    last.nums.forEach(n=>{
+        const s=document.createElement('span');
+        s.className='res-ball-mini'; s.innerText=n;
+        box.appendChild(s);
+    });
+    const p=document.createElement('span');
+    p.className='res-ball-mini is-power'; p.innerText=last.pwr;
+    box.appendChild(p);
 }
 
-function updateStatus(msg, isLoading) {
-    const el = document.getElementById('last-draw-date');
-    if (el) el.innerText = msg;
+/* ================= UTILS ================= */
+
+function initSmartPaste(){}
+
+function updateStatus(msg){
+    const el=document.getElementById('last-draw-date');
+    if(el) el.innerText=msg;
 }
 
-window.onload = loadData;
+document.addEventListener('DOMContentLoaded', loadData);
