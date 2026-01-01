@@ -140,8 +140,4 @@ h3 {
 .ball {
   display: inline-block;
   background: #fff;
-  border-radius: 50%;
-  padding: 6px 9px;
-  margin-right: 6px;
-  font-weight: 700;
-}
+  border-ra
