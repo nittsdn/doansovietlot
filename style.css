@@ -1,92 +1,147 @@
-const CSV_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQaiHVe1aFj0i1AN9S2-RQCMyrAMluwi_2cs6LSKURf4Elmg9TBpzhHekecCRR-qa2-TwOuXQyGNRMp/pub?gid=213374634&single=true&output=csv";
-
-const TOTAL = 55;
-const PICK = 6;
-const GEN = 5;
-
-let data = [];
-let disabled = new Set();
-
-async function loadData() {
-  try {
-    const res = await fetch(CSV_URL, { cache: "no-store" });
-    const text = await res.text();
-
-    const rows = text.trim().split("\n").map(r => r.split(","));
-    data = rows.slice(1).map(r => ({
-      numbers: r.slice(1, 7).map(Number),
-      power: Number(r[7])
-    }));
-
-    renderHeat();
-    renderLast();
-    setStatus("Sẵn sàng", true);
-  } catch {
-    setStatus("Lỗi tải dữ liệu", false);
-  }
+* {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
 }
 
-function setStatus(t, ok) {
-  const s = document.getElementById("status-text");
-  s.textContent = t;
-  s.classList.toggle("ready", ok);
+body {
+  background: #ededed;
+  margin: 0;
+  padding: 20px;
 }
 
-function renderHeat() {
-  const freq = Array(TOTAL + 1).fill(0);
-  data.forEach(d => d.numbers.forEach(n => freq[n]++));
-
-  document.querySelectorAll(".cell").forEach(c => {
-    const n = +c.dataset.number;
-    c.className = "cell";
-
-    if (disabled.has(n)) return c.classList.add("off");
-    if (freq[n] === 0) c.classList.add("cold");
-    if (freq[n] > 10) c.classList.add("hot");
-  });
-
-  const last = data.at(-1);
-  last.numbers.forEach(n =>
-    document.querySelector(`[data-number="${n}"]`)?.classList.add("last")
-  );
-  document.querySelector(`[data-number="${last.power}"]`)?.classList.add("power");
+.app {
+  max-width: 420px;
+  margin: auto;
 }
 
-function renderLast() {
-  document.getElementById("last-draw").innerHTML =
-    data.at(-1).numbers.map(n =>
-      `<span class="ball">${String(n).padStart(2, "0")}</span>`
-    ).join("");
+/* HEADER */
+.header {
+  background: #fff;
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-function generate() {
-  const pool = [];
-  for (let i = 1; i <= TOTAL; i++) if (!disabled.has(i)) pool.push(i);
-  return pool.sort(() => 0.5 - Math.random()).slice(0, PICK).sort((a, b) => a - b);
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b63f6;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadData();
+.status {
+  font-size: 13px;
+  color: #888;
+}
 
-  document.querySelectorAll(".cell").forEach(c =>
-    c.onclick = () => {
-      const n = +c.dataset.number;
-      disabled.has(n) ? disabled.delete(n) : disabled.add(n);
-      renderHeat();
-    }
-  );
+.status.ready {
+  color: #16a34a;
+}
 
-  document.getElementById("analyze-btn").onclick = () => {
-    const box = document.getElementById("result-list");
-    box.innerHTML = "";
-    for (let i = 0; i < GEN; i++) {
-      const r = document.createElement("div");
-      r.className = "result-row";
-      r.innerHTML = generate().map(n =>
-        `<span class="ball">${String(n).padStart(2, "0")}</span>`
-      ).join("");
-      box.appendChild(r);
-    }
-  };
-});
+.last-draw .ball {
+  margin-left: 4px;
+}
+
+/* CARD */
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.cell {
+  border-radius: 12px;
+  padding: 10px 0;
+  text-align: center;
+  font-weight: 600;
+  cursor: pointer;
+  background: #f5f7fb;
+}
+
+.cell.hot { background: #ffe4e6; color: #dc2626; }
+.cell.cold { background: #e0f2fe; color: #2563eb; }
+.cell.last { outline: 2px solid #facc15; }
+.cell.power { background: #fde047; }
+.cell.off { opacity: 0.35; }
+
+/* LEGEND */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  margin-top: 12px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.dot.hot { background: #dc2626; }
+.dot.cold { background: #2563eb; }
+.dot.last { background: #facc15; }
+.dot.power { background: #f59e0b; }
+.dot.off { background: #999; }
+
+/* BUTTON */
+.analyze-btn {
+  width: 100%;
+  border: none;
+  border-radius: 16px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #0b63f6, #1d4ed8);
+  color: #fff;
+  margin-bottom: 14px;
+}
+
+/* RESULT */
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#copy-all {
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.result-row {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.ball {
+  display: inline-block;
+  background: #fff;
+  border-radius: 50%;
+  padding: 6px 9px;
+  margin-right: 6px;
+  font-weight: 700;
+}
