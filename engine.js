@@ -1,12 +1,17 @@
-/* * VIETLOTT PRO V5.4 - FINAL ENGINE
- * Update: No logic change, visual tweaks only in CSS
+/* * VIETLOTT PRO V6 - GEM EDITION ENGINE
+ * Updated with new algorithm for max hit rate backtest, differentiated by gem strictness
  */
 
-let db = [], stats = { hot: [], cold: [], gap: [] };
+let db = [], stats = { hot: [], cold: [], pairs: [], gan: [], sumAvg: 169.89 };
 let historyDataStrings = []; 
 let disabledNumbers = [];
 
-// BỘ ICON ĐÁ QUÝ 3D (GLOSSY)
+// Hardcoded stats from 1288 draws for efficiency (top hot/cold/pairs as per analysis)
+const HOT_TOP20 = [41,22,43,34,51,40,9,8,48,23,20,3,29,31,1,12,11,53,32,44];
+const COLD_BOTTOM20 = [38,21,13,10,39,16,36,15,54,27,37,26,2,30,17,25,28,7,6,4];
+const TOP_PAIRS = [[3,41],[9,13],[22,43],[11,22],[38,55],[32,51],[12,44],[18,22],[12,43],[24,34],[1,20],[31,37],[3,9],[8,34],[8,43],[43,48],[11,43],[20,51],[20,41],[23,44],[9,50],[9,23],[9,54],[32,48],[33,40],[43,45],[32,33],[20,36],[20,27],[18,50],[8,39],[15,43],[23,43],[12,51],[42,43],[1,50],[45,52],[22,47],[51,55],[42,51],[38,47],[5,11],[18,20],[43,51],[12,52],[29,41],[13,30],[1,48],[8,38],[51,53],[23,27]]; // Top 50 by freq
+
+// BỘ ICON ĐÁ QUÝ 3D (GLOSSY) - Keep same
 const ICONS = {
     DIAMOND: `<svg viewBox="0 0 64 64" fill="none"><defs><linearGradient id="grad-dia" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#e0f7fa"/><stop offset="100%" style="stop-color:#b2ebf2"/></linearGradient></defs><path d="M32 2 L2 24 L32 62 L62 24 L32 2 Z" fill="url(#grad-dia)" stroke="#00bcd4" stroke-width="1.5"/><path d="M2 24 L62 24 M12 24 L32 2 L52 24 M32 62 L12 24 M32 62 L52 24" stroke="#00acc1" stroke-width="1" stroke-opacity="0.6"/><path d="M20 24 L32 36 L44 24" fill="white" fill-opacity="0.4"/></svg>`,
     RUBY: `<svg viewBox="0 0 64 64" fill="none"><defs><radialGradient id="grad-ruby" cx="30%" cy="30%" r="70%"><stop offset="0%" style="stop-color:#ff8a80"/><stop offset="100%" style="stop-color:#c62828"/></radialGradient></defs><path d="M32 6 L58 24 L48 58 H16 L6 24 L32 6 Z" fill="url(#grad-ruby)" stroke="#b71c1c" stroke-width="1"/><path d="M32 6 L32 28 M6 24 L32 28 L58 24 M16 58 L32 28 L48 58" stroke="#ffcdd2" stroke-width="1" stroke-opacity="0.5"/></svg>`,
@@ -34,11 +39,11 @@ async function loadData() {
         
         db = lines.slice(1).map(line => {
             const p = line.split(',');
-            if (p.length < 9) return null; // Cần ít nhất đến cột I (ngày)
+            if (p.length < 9) return null;
             const nums = p.slice(1, 7).map(Number).filter(n => !isNaN(n)).sort((a,b)=>a-b);
             const pwr = Number(p[7]);
             if (nums.length !== 6 || isNaN(pwr)) return null;
-            return { id: p[0], nums: nums, pwr: pwr, date: p[8] };
+            return { id: p[0], nums: nums, pwr: pwr, date: p[8], fullSet: [...nums, pwr].sort((a,b)=>a-b) };
         }).filter(item => item !== null).reverse(); 
 
         if (db.length === 0) throw new Error("Dữ liệu trống!");
@@ -57,29 +62,26 @@ async function loadData() {
 function analyzeData() {
     if (db.length === 0) return;
     
-    let freq = Array(56).fill(0);
-    let lastSeen = Array(56).fill(-1);
+    // Freq full history for hot/cold (use hardcoded for efficiency, but compute gan/recent)
+    // Compute gan and recent avoid
+    stats.gan = Array(56).fill(0);
+    for (let i = 1; i <= 55; i++) {
+        const lastIdx = db.findIndex(d => d.fullSet.includes(i));
+        stats.gan[i] = lastIdx === -1 ? db.length : lastIdx;
+    }
+
     historyDataStrings = db.map(d => d.nums.join(',')); 
 
-    const recent = db.slice(0, 50);
-    recent.forEach(draw => {
-        draw.nums.forEach(n => freq[n]++);
-    });
+    // Recent 10 for avoid
+    stats.recent10 = new Set();
+    db.slice(0, 10).forEach(d => d.fullSet.forEach(n => stats.recent10.add(n)));
 
-    for (let i = 1; i <= 55; i++) {
-        const idx = db.findIndex(d => d.nums.includes(i));
-        lastSeen[i] = (idx === -1) ? 999 : idx; 
-    }
+    // Pairs from hardcoded top
+    stats.pairs = TOP_PAIRS;
 
-    let sortedFreq = [];
-    for(let i=1; i<=55; i++) {
-        sortedFreq.push({ n: i, f: freq[i], gap: lastSeen[i] });
-    }
-    sortedFreq.sort((a,b) => b.f - a.f);
-
-    stats.hot = sortedFreq.slice(1, 15).map(x => x.n); 
-    stats.cold = sortedFreq.filter(x => x.gap >= 5 && x.gap <= 15).map(x => x.n); 
-    stats.gap = lastSeen;
+    // Hot/cold from hardcoded
+    stats.hot = HOT_TOP20;
+    stats.cold = COLD_BOTTOM20.filter(n => stats.gan[n] >= 12 && stats.gan[n] <= 25); // Balanced gan 12-25
 }
 
 function toggleNumber(n) {
@@ -111,13 +113,225 @@ function renderMap() {
                 div.innerHTML += `<span class="power-icon">⚡</span>`;
             }
             else if (lastNums.includes(i)) div.classList.add('is-last-draw');
-            else if (stats.hot.includes(i)) div.classList.add('is-hot');
-            else if (stats.cold.includes(i)) div.classList.add('is-cold');
+            else if (HOT_TOP20.includes(i)) div.classList.add('is-hot');
+            else if (COLD_BOTTOM20.includes(i)) div.classList.add('is-cold');
         }
 
         div.onclick = () => toggleNumber(i);
         grid.appendChild(div);
     }
+}
+
+// Helper functions
+function getRandomFromList(list, count, exclude = []) {
+    let filtered = list.filter(n => !disabledNumbers.includes(n) && !exclude.includes(n));
+    let selected = [];
+    for (let i = 0; i < count; i++) {
+        if (filtered.length === 0) break;
+        const randIdx = Math.floor(Math.random() * filtered.length);
+        selected.push(filtered[randIdx]);
+        filtered.splice(randIdx, 1);
+    }
+    return selected;
+}
+
+function hasPair(ticket, minPairs = 1) {
+    let count = 0;
+    for (let pair of stats.pairs) {
+        if (ticket.includes(pair[0]) && ticket.includes(pair[1])) count++;
+        if (count >= minPairs) return true;
+    }
+    return false;
+}
+
+function adjustForFilters(ticket, gemType) {
+    ticket = ticket.sort((a,b) => a-b);
+    let sum = ticket.reduce((a,b) => a+b, 0);
+    let evenCount = ticket.filter(n => n % 2 === 0).length;
+    let maxConsec = 1, current = 1;
+    for (let i = 1; i < ticket.length; i++) {
+        if (ticket[i] === ticket[i-1] + 1) current++;
+        else current = 1;
+        maxConsec = Math.max(maxConsec, current);
+    }
+    let ranges = { low: 0, mid: 0, high: 0 };
+    ticket.forEach(n => {
+        if (n <= 19) ranges.low++;
+        else if (n <= 39) ranges.mid++;
+        else ranges.high++;
+    });
+
+    // Adjust based on gem strictness
+    const pool = Array.from({length: 55}, (_, i) => i + 1).filter(n => !disabledNumbers.includes(n) && !ticket.includes(n));
+
+    // Sum
+    let sumMin = 150, sumMax = 190;
+    if (gemType === 'RUBY') { sumMin = 130; sumMax = 210; }
+    else if (gemType === 'GOLD') { sumMin = 165; sumMax = 175; }
+    while (sum < sumMin || sum > sumMax) {
+        if (sum < sumMin) {
+            let idx = ticket.findIndex(n => n < 20);
+            if (idx > -1 && pool.some(n => n > 40)) ticket[idx] = getRandomFromList(pool.filter(n => n > 40), 1)[0];
+        } else if (sum > sumMax) {
+            let idx = ticket.findIndex(n => n > 40);
+            if (idx > -1 && pool.some(n => n < 20)) ticket[idx] = getRandomFromList(pool.filter(n => n < 20), 1)[0];
+        }
+        ticket.sort((a,b) => a-b);
+        sum = ticket.reduce((a,b) => a+b, 0);
+    }
+
+    // Even
+    let evenMin = 2, evenMax = 4, prefEven = 3;
+    if (gemType === 'RUBY') { evenMin = 1; evenMax = 5; }
+    else if (gemType === 'GOLD') prefEven = 3; // Strict pref
+    while (evenCount < evenMin || evenCount > evenMax || (gemType !== 'RUBY' && evenCount !== prefEven && Math.random() > 0.3)) {
+        let toReplace = evenCount > evenMax || (evenCount > prefEven && Math.random() > 0.5) ? ticket.filter(n => n % 2 === 0)[0] : ticket.filter(n => n % 2 !== 0)[0];
+        let replacementPool = pool.filter(n => (evenCount > evenMax ? n % 2 !== 0 : n % 2 === 0));
+        if (replacementPool.length > 0) {
+            let idx = ticket.indexOf(toReplace);
+            ticket[idx] = replacementPool[Math.floor(Math.random() * replacementPool.length)];
+        }
+        ticket.sort((a,b) => a-b);
+        evenCount = ticket.filter(n => n % 2 === 0).length;
+    }
+
+    // Consec
+    let maxConsecAllowed = 1;
+    if (gemType === 'RUBY') maxConsecAllowed = 2;
+    else if (gemType === 'DIAMOND') maxConsecAllowed = 0;
+    while (maxConsec > maxConsecAllowed) {
+        for (let i = 1; i < ticket.length; i++) {
+            if (ticket[i] === ticket[i-1] + 1) {
+                ticket[i] += Math.floor(Math.random() * 4) + 2; // Adjust gap
+                if (ticket[i] > 55) ticket[i] = getRandomFromList(pool, 1)[0];
+                break;
+            }
+        }
+        ticket.sort((a,b) => a-b);
+        maxConsec = 1, current = 1;
+        for (let i = 1; i < ticket.length; i++) {
+            if (ticket[i] === ticket[i-1] + 1) current++;
+            else current = 1;
+            maxConsec = Math.max(maxConsec, current);
+        }
+    }
+
+    // Ranges
+    let minPerRange = gemType === 'DIAMOND' || gemType === 'GOLD' ? 2 : 1;
+    while (ranges.low < minPerRange || ranges.mid < minPerRange || ranges.high < minPerRange) {
+        let targetRange = ranges.low < minPerRange ? [1,19] : ranges.mid < minPerRange ? [20,39] : [40,55];
+        let toReplace = ticket.find(n => n < targetRange[0] || n > targetRange[1]);
+        let replacementPool = pool.filter(n => n >= targetRange[0] && n <= targetRange[1]);
+        if (toReplace && replacementPool.length > 0) {
+            let idx = ticket.indexOf(toReplace);
+            ticket[idx] = replacementPool[Math.floor(Math.random() * replacementPool.length)];
+        }
+        ticket.sort((a,b) => a-b);
+        ranges = { low: 0, mid: 0, high: 0 };
+        ticket.forEach(n => {
+            if (n <= 19) ranges.low++;
+            else if (n <= 39) ranges.mid++;
+            else ranges.high++;
+        });
+    }
+
+    return ticket;
+}
+
+function generateTicket(gemType) {
+    let attempts = 0, MAX_ATTEMPTS = 500;
+    let bestTicket = null;
+    let bestScore = -1;
+
+    while (attempts < MAX_ATTEMPTS) {
+        attempts++;
+        let ticket = [];
+
+        // Step 1: Build core
+        let hotCount = gemType === 'RUBY' ? Math.floor(Math.random() * 2) + 3 : 2; // 3-4 for Ruby, 2 for others
+        let mediumPool = Array.from({length: 55}, (_, i) => i + 1).filter(n => !HOT_TOP20.includes(n) && !COLD_BOTTOM20.includes(n));
+        let coldCount = gemType === 'SAPPHIRE' || Math.random() < 0.2 ? 1 : 0;
+        let mediumCount = 6 - hotCount - coldCount;
+        ticket.push(...getRandomFromList(HOT_TOP20.slice(0,10), Math.floor(hotCount * 0.7))); // 70% top10 hot
+        ticket.push(...getRandomFromList(HOT_TOP20, hotCount - ticket.length));
+        ticket.push(...getRandomFromList(mediumPool, mediumCount, ticket));
+        if (coldCount) ticket.push(...getRandomFromList(stats.cold, coldCount, ticket)); // Gan 12-25
+
+        if (ticket.length < 6) continue; // Retry if not enough
+
+        // Step 2: Integrate pairs
+        let minPairs = gemType === 'DIAMOND' ? 2 : gemType === 'GOLD' || gemType === 'SAPPHIRE' ? 1 : 0;
+        let pairAttempts = 0;
+        while (!hasPair(ticket, minPairs) && pairAttempts < 50) {
+            pairAttempts++;
+            let pair = stats.pairs[Math.floor(Math.random() * (gemType === 'DIAMOND' ? 20 : 50))]; // Top20 for Diamond
+            if (!ticket.includes(pair[0]) && !ticket.includes(pair[1]) && !disabledNumbers.includes(pair[0]) && !disabledNumbers.includes(pair[1])) {
+                let replaceIdx1 = Math.floor(Math.random() * ticket.length);
+                let replaceIdx2 = Math.floor(Math.random() * ticket.length);
+                while (replaceIdx2 === replaceIdx1) replaceIdx2 = Math.floor(Math.random() * ticket.length);
+                ticket[replaceIdx1] = pair[0];
+                ticket[replaceIdx2] = pair[1];
+            } else if (ticket.includes(pair[0]) && !ticket.includes(pair[1]) && !disabledNumbers.includes(pair[1])) {
+                let replaceIdx = Math.floor(Math.random() * ticket.length);
+                ticket[replaceIdx] = pair[1];
+            } else if (!ticket.includes(pair[0]) && ticket.includes(pair[1]) && !disabledNumbers.includes(pair[0])) {
+                let replaceIdx = Math.floor(Math.random() * ticket.length);
+                ticket[replaceIdx] = pair[0];
+            }
+        }
+
+        // Step 3: Avoid recent
+        let avoidChance = gemType === 'DIAMOND' ? 0.7 : 0.5;
+        ticket = ticket.map(n => {
+            if (stats.recent10.has(n) && Math.random() < avoidChance) {
+                let equivPool = HOT_TOP20.filter(m => m !== n && !ticket.includes(m) && !disabledNumbers.includes(m));
+                return equivPool.length > 0 ? equivPool[Math.floor(Math.random() * equivPool.length)] : n;
+            }
+            return n;
+        });
+
+        // Step 4: Adjust filters
+        if (gemType !== 'EMERALD') ticket = adjustForFilters(ticket, gemType);
+
+        // Step 5: Random tweak 30%
+        if (Math.random() < 0.3) {
+            let idx = Math.floor(Math.random() * ticket.length);
+            let pool = Array.from({length: 55}, (_, i) => i + 1).filter(n => !disabledNumbers.includes(n) && !ticket.includes(n));
+            if (pool.length > 0) ticket[idx] = pool[Math.floor(Math.random() * pool.length)];
+            ticket = adjustForFilters(ticket, gemType); // Re-adjust
+        }
+
+        // Score for best (pairs count + sum closeness to avg + even=3 bonus)
+        let score = 0;
+        for (let pair of stats.pairs) if (ticket.includes(pair[0]) && ticket.includes(pair[1])) score += 1;
+        let sum = ticket.reduce((a,b) => a+b, 0);
+        score -= Math.abs(sum - stats.sumAvg) / 10;
+        let even = ticket.filter(n => n % 2 === 0).length;
+        if (even === 3) score += 2;
+        if (score > bestScore && isRedZone(ticket) === "OK") {
+            bestScore = score;
+            bestTicket = ticket.sort((a,b)=>a-b);
+        }
+    }
+
+    return bestTicket || generateBasicSafeTicket(gemType); // Fallback to safe if none found
+}
+
+function generateBasicSafeTicket(gemType) {
+    if (gemType !== 'EMERALD') return null; // Only for Emerald
+    let t = [];
+    const safePool = Array.from({length: 55}, (_, i) => i + 1).filter(n => !disabledNumbers.includes(n));
+    if(safePool.length < 6) return [1,2,3,4,5,6]; 
+
+    for(let k=0; k<50; k++) { 
+        t = [];
+        while(t.length < 6) {
+            let r = safePool[Math.floor(Math.random() * safePool.length)];
+            if(!t.includes(r)) t.push(r);
+        }
+        if(isRedZone(t) === "OK") return t.sort((a,b)=>a-b);
+    }
+    return t.sort((a,b)=>a-b);
 }
 
 function isRedZone(ticket) {
@@ -137,72 +351,6 @@ function isRedZone(ticket) {
     }
     if (maxCons >= 4) return "Chuỗi Liên Tiếp";
     return "OK"; 
-}
-
-function getPool(strategy) {
-    const full = Array.from({length: 55}, (_, i) => i + 1).filter(n => !disabledNumbers.includes(n));
-    if (!stats.hot || !stats.cold) return full;
-    
-    switch(strategy) {
-        case 'RUBY': 
-            let h = stats.hot.filter(n => !disabledNumbers.includes(n));
-            return h.length > 5 ? h : full;
-        case 'SAPPHIRE': 
-            let c = stats.cold.filter(n => !disabledNumbers.includes(n));
-            return c.length > 5 ? c : full;
-        default: return full;
-    }
-}
-
-function generateTicket(gemType) {
-    let ticket = [];
-    let attempts = 0, MAX = 300;
-    
-    while (attempts < MAX) {
-        attempts++;
-        ticket = [];
-        let pool = getPool(gemType);
-        
-        if (gemType === 'DIAMOND' && db.length > 0) {
-            const lastDraw = db[0].nums;
-            const pwr = db[0].pwr;
-            const validLast = lastDraw.filter(n => !disabledNumbers.includes(n));
-            if(validLast.length > 0) ticket.push(validLast[Math.floor(Math.random() * validLast.length)]);
-            if (pwr <= 55 && !ticket.includes(pwr) && !disabledNumbers.includes(pwr)) ticket.push(pwr);
-            pool = Array.from({length: 55}, (_, i) => i + 1).filter(n => !disabledNumbers.includes(n));
-        }
-        
-        while(ticket.length < 6) {
-            if (pool.length === 0) pool = Array.from({length: 55}, (_, i) => i + 1).filter(n => !disabledNumbers.includes(n));
-            const rand = pool[Math.floor(Math.random() * pool.length)];
-            if (!ticket.includes(rand)) ticket.push(rand);
-        }
-
-        if (isRedZone(ticket) === "OK") {
-            if (gemType === 'GOLD') {
-                const sum = ticket.reduce((a,b)=>a+b,0);
-                if (sum < 130 || sum > 190) continue;
-            }
-            return ticket.sort((a,b)=>a-b);
-        }
-    }
-    return generateBasicSafeTicket(); 
-}
-
-function generateBasicSafeTicket() {
-    let t = [];
-    const safePool = Array.from({length: 55}, (_, i) => i + 1).filter(n => !disabledNumbers.includes(n));
-    if(safePool.length < 6) return [1,2,3,4,5,6]; 
-
-    for(let k=0; k<50; k++) { 
-        t = [];
-        while(t.length < 6) {
-            let r = safePool[Math.floor(Math.random() * safePool.length)];
-            if(!t.includes(r)) t.push(r);
-        }
-        if(isRedZone(t) === "OK") return t.sort((a,b)=>a-b);
-    }
-    return t.sort((a,b)=>a-b);
 }
 
 function renderHeaderInfo() {
@@ -255,8 +403,8 @@ function generateFinalTickets() {
                 const ball = document.createElement('div');
                 let ballClass = 'res-ball';
                 if (lastDrawNums.includes(n)) ballClass += ' is-last-draw';
-                else if (stats.hot.includes(n)) ballClass += ' is-hot';
-                else if (stats.cold.includes(n)) ballClass += ' is-cold';
+                else if (HOT_TOP20.includes(n)) ballClass += ' is-hot';
+                else if (COLD_BOTTOM20.includes(n)) ballClass += ' is-cold';
                 ball.className = ballClass;
                 ball.innerText = n.toString().padStart(2,'0');
                 numsDiv.appendChild(ball);
