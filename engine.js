@@ -23,8 +23,6 @@ const GEMS = {
     EMERALD: { id: 'EMERALD', name: "EMERALD", icon: ICONS.EMERALD, color: "gem-emerald" }
 };
 
-const STORAGE_KEY = 'vietlott_pro_v5_storage';
-
 async function loadData() {
     updateStatus("Đang tải dữ liệu...", true);
     try {
@@ -43,23 +41,11 @@ async function loadData() {
             return { id: p[0], nums: nums, pwr: pwr, date: p[8] };
         }).filter(item => item !== null).reverse(); 
 
-        try {
-            const localData = localStorage.getItem(STORAGE_KEY);
-            if (localData) {
-                const manualEntry = JSON.parse(localData);
-                if (manualEntry && manualEntry.nums && manualEntry.nums.length === 6) {
-                    const latestDbId = db.length > 0 ? parseInt(db[0].id) : 0;
-                    if (parseInt(manualEntry.id) > latestDbId) db.unshift(manualEntry);
-                }
-            }
-        } catch (err) { localStorage.removeItem(STORAGE_KEY); }
-
         if (db.length === 0) throw new Error("Dữ liệu trống!");
 
         analyzeData();
         renderHeaderInfo();
         renderMap();
-        initSmartPaste(); 
         updateStatus(`Sẵn sàng (Kỳ #${db[0].id})`, false);
 
     } catch (e) {
@@ -314,46 +300,9 @@ function copyAll() {
     navigator.clipboard.writeText(text).then(() => alert("Đã copy tất cả!"));
 }
 
-function initSmartPaste() {
-    const inputs = document.querySelectorAll('.ios-num-box');
-    if(inputs.length === 0) return;
-    inputs[0].addEventListener('paste', (e) => {
-        e.preventDefault();
-        const numbers = (e.clipboardData || window.clipboardData).getData('text').match(/\d+/g);
-        if (numbers && numbers.length > 0) {
-            for (let i = 0; i < 6 && i < numbers.length; i++) inputs[i].value = numbers[i].toString().padStart(2, '0');
-            if (numbers.length >= 7) document.getElementById('input-pwr').value = numbers[6].toString().padStart(2, '0');
-            document.getElementById('save-manual-btn').focus();
-        }
-    });
-    inputs.forEach((input, idx) => {
-        input.addEventListener('input', () => {
-            if (input.value.length >= 2) {
-                if (idx < 5) inputs[idx+1].focus();
-                else document.getElementById('input-pwr').focus();
-            }
-        });
-    });
-}
-
 function updateStatus(msg, isLoading) {
     const el = document.getElementById('last-draw-date');
     if (el) el.innerText = msg;
-}
-
-const saveBtn = document.getElementById('save-manual-btn');
-if(saveBtn) {
-    saveBtn.onclick = () => {
-        const inputs = document.querySelectorAll('.ios-num-box');
-        const nums = Array.from(inputs).map(i => parseInt(i.value));
-        const pwrInput = document.getElementById('input-pwr');
-        const pwr = pwrInput ? parseInt(pwrInput.value) : 0;
-        if (nums.some(isNaN) || isNaN(pwr)) { alert("Vui lòng nhập đủ số!"); return; }
-        let d = new Date(); 
-        const entry = { id: (parseInt(db[0].id) + 1).toString(), nums: nums.sort((a,b)=>a-b), pwr: pwr, date: `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}` };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(entry));
-        alert(`Đã lưu Kỳ ${entry.id}!`); location.reload(); 
-    };
 }
 
 document.addEventListener('DOMContentLoaded', loadData);
