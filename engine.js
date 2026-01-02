@@ -1,5 +1,6 @@
 /* * VIETLOTT PRO V6 - GEM EDITION ENGINE
  * Updated with new algorithm for max hit rate backtest, differentiated by gem strictness
+ * Fixed infinite loops and performance issues
  */
 
 let db = [], stats = { hot: [], cold: [], pairs: [], gan: [], sumAvg: 169.89 };
@@ -154,27 +155,31 @@ function adjustForFilters(ticket, gemType) {
         else current = 1;
         maxConsec = Math.max(maxConsec, current);
     }
-    let ranges = { low: 0, mid: 0, high: 0 };
-    ticket.forEach(n => {
-        if (n <= 19) ranges.low++;
-        else if (n <= 39) ranges.mid++;
-        else ranges.high++;
-    });
-
-    // Adjust based on gem strictness
-    const pool = Array.from({length: 55}, (_, i) => i + 1).filter(n => !disabledNumbers.includes(n) && !ticket.includes(n));
+    let ranges = { low: ticket.filter(n => n <= 19).length, mid: ticket.filter(n => 20 <= n && n <= 39).length, high: ticket.filter(n => n > 39).length };
+    let pool = Array.from({length: 55}, (_, i) => i + 1).filter(n => !disabledNumbers.includes(n) && !ticket.includes(n));
 
     // Sum
     let sumMin = 150, sumMax = 190;
     if (gemType === 'RUBY') { sumMin = 130; sumMax = 210; }
     else if (gemType === 'GOLD') { sumMin = 165; sumMax = 175; }
-    while (sum < sumMin || sum > sumMax) {
+    let adjAttempts = 0;
+    while ((sum < sumMin || sum > sumMax) && adjAttempts < 20) {
+        adjAttempts++;
+        let idx = null;
         if (sum < sumMin) {
-            let idx = ticket.findIndex(n => n < 20);
-            if (idx > -1 && pool.some(n => n > 40)) ticket[idx] = getRandomFromList(pool.filter(n => n > 40), 1)[0];
+            idx = ticket.findIndex(n => n < 20);
+            let highPool = pool.filter(n => n > 40);
+            if (idx !== -1 && highPool.length > 0) {
+                ticket[idx] = highPool[Math.floor(Math.random() * highPool.length)];
+                pool = pool.filter(n => n !== ticket[idx]);
+            }
         } else if (sum > sumMax) {
-            let idx = ticket.findIndex(n => n > 40);
-            if (idx > -1 && pool.some(n => n < 20)) ticket[idx] = getRandomFromList(pool.filter(n => n < 20), 1)[0];
+            idx = ticket.findIndex(n => n > 40);
+            let lowPool = pool.filter(n => n < 20);
+            if (idx !== -1 && lowPool.length > 0) {
+                ticket[idx] = lowPool[Math.floor(Math.random() * lowPool.length)];
+                pool = pool.filter(n => n !== ticket[idx]);
+            }
         }
         ticket.sort((a,b) => a-b);
         sum = ticket.reduce((a,b) => a+b, 0);
@@ -183,27 +188,44 @@ function adjustForFilters(ticket, gemType) {
     // Even
     let evenMin = 2, evenMax = 4, prefEven = 3;
     if (gemType === 'RUBY') { evenMin = 1; evenMax = 5; }
-    else if (gemType === 'GOLD') prefEven = 3; // Strict pref
-    while (evenCount < evenMin || evenCount > evenMax || (gemType !== 'RUBY' && evenCount !== prefEven && Math.random() > 0.3)) {
-        let toReplace = evenCount > evenMax || (evenCount > prefEven && Math.random() > 0.5) ? ticket.filter(n => n % 2 === 0)[0] : ticket.filter(n => n % 2 !== 0)[0];
-        let replacementPool = pool.filter(n => (evenCount > evenMax ? n % 2 !== 0 : n % 2 === 0));
-        if (replacementPool.length > 0) {
-            let idx = ticket.indexOf(toReplace);
-            ticket[idx] = replacementPool[Math.floor(Math.random() * replacementPool.length)];
+    else if (gemType === 'GOLD') prefEven = 3;
+    adjAttempts = 0;
+    while ((evenCount < evenMin || evenCount > evenMax || (gemType !== 'RUBY' && evenCount !== prefEven && Math.random() > 0.3)) && adjAttempts < 20) {
+        adjAttempts++;
+        let toReplace = null;
+        let replacementPool = [];
+        if (evenCount > evenMax || (evenCount > prefEven && Math.random() > 0.5)) {
+            toReplace = ticket.find(n => n % 2 === 0);
+            replacementPool = pool.filter(n => n % 2 !== 0);
+        } else {
+            toReplace = ticket.find(n => n % 2 !== 0);
+            replacementPool = pool.filter(n => n % 2 === 0);
         }
-        ticket.sort((a,b) => a-b);
-        evenCount = ticket.filter(n => n % 2 === 0).length;
+        if (toReplace !== undefined && replacementPool.length > 0) {
+            let idx = ticket.indexOf(toReplace);
+            let new_n = replacementPool[Math.floor(Math.random() * replacementPool.length)];
+            ticket[idx] = new_n;
+            pool = pool.filter(n => n !== new_n);
+            pool.push(toReplace);
+            ticket.sort((a,b) => a-b);
+            evenCount = ticket.filter(n => n % 2 === 0).length;
+        }
     }
 
     // Consec
     let maxConsecAllowed = 1;
     if (gemType === 'RUBY') maxConsecAllowed = 2;
     else if (gemType === 'DIAMOND') maxConsecAllowed = 0;
-    while (maxConsec > maxConsecAllowed) {
+    adjAttempts = 0;
+    while (maxConsec > maxConsecAllowed && adjAttempts < 20) {
+        adjAttempts++;
         for (let i = 1; i < ticket.length; i++) {
             if (ticket[i] === ticket[i-1] + 1) {
-                ticket[i] += Math.floor(Math.random() * 4) + 2; // Adjust gap
-                if (ticket[i] > 55) ticket[i] = getRandomFromList(pool, 1)[0];
+                let new_val = ticket[i] + Math.floor(Math.random() * 4) + 2;
+                if (new_val > 55 || ticket.includes(new_val)) {
+                    if (pool.length > 0) new_val = pool[Math.floor(Math.random() * pool.length)];
+                }
+                ticket[i] = new_val;
                 break;
             }
         }
@@ -217,29 +239,29 @@ function adjustForFilters(ticket, gemType) {
     }
 
     // Ranges
-    let minPerRange = gemType === 'DIAMOND' || gemType === 'GOLD' ? 2 : 1;
-    while (ranges.low < minPerRange || ranges.mid < minPerRange || ranges.high < minPerRange) {
+    let minPerRange = (gemType === 'DIAMOND' || gemType === 'GOLD') ? 2 : 1;
+    adjAttempts = 0;
+    while ((ranges.low < minPerRange || ranges.mid < minPerRange || ranges.high < minPerRange) && adjAttempts < 20) {
+        adjAttempts++;
         let targetRange = ranges.low < minPerRange ? [1,19] : ranges.mid < minPerRange ? [20,39] : [40,55];
-        let toReplace = ticket.find(n => n < targetRange[0] || n > targetRange[1]);
-        let replacementPool = pool.filter(n => n >= targetRange[0] && n <= targetRange[1]);
-        if (toReplace && replacementPool.length > 0) {
+        let toReplace = ticket.find(n => !(targetRange[0] <= n && n <= targetRange[1]));
+        let replacementPool = pool.filter(n => targetRange[0] <= n && n <= targetRange[1]);
+        if (toReplace !== undefined && replacementPool.length > 0) {
             let idx = ticket.indexOf(toReplace);
-            ticket[idx] = replacementPool[Math.floor(Math.random() * replacementPool.length)];
+            let new_n = replacementPool[Math.floor(Math.random() * replacementPool.length)];
+            ticket[idx] = new_n;
+            pool = pool.filter(n => n !== new_n);
+            pool.push(toReplace);
+            ticket.sort((a,b) => a-b);
+            ranges = { low: ticket.filter(n => n <= 19).length, mid: ticket.filter(n => 20 <= n && n <= 39).length, high: ticket.filter(n => n > 39).length };
         }
-        ticket.sort((a,b) => a-b);
-        ranges = { low: 0, mid: 0, high: 0 };
-        ticket.forEach(n => {
-            if (n <= 19) ranges.low++;
-            else if (n <= 39) ranges.mid++;
-            else ranges.high++;
-        });
     }
 
     return ticket;
 }
 
 function generateTicket(gemType) {
-    let attempts = 0, MAX_ATTEMPTS = 500;
+    let attempts = 0, MAX_ATTEMPTS = 50;
     let bestTicket = null;
     let bestScore = -1;
 
@@ -247,24 +269,24 @@ function generateTicket(gemType) {
         attempts++;
         let ticket = [];
 
-        // Step 1: Build core
-        let hotCount = gemType === 'RUBY' ? Math.floor(Math.random() * 2) + 3 : 2; // 3-4 for Ruby, 2 for others
+        let hotCount = Math.floor(Math.random() * 2) + 3;
+        if (gemType !== 'RUBY') hotCount = 2;
         let mediumPool = Array.from({length: 55}, (_, i) => i + 1).filter(n => !HOT_TOP20.includes(n) && !COLD_BOTTOM20.includes(n));
-        let coldCount = gemType === 'SAPPHIRE' || Math.random() < 0.2 ? 1 : 0;
+        let coldCount = (gemType === 'SAPPHIRE' || Math.random() < 0.2) ? 1 : 0;
         let mediumCount = 6 - hotCount - coldCount;
-        ticket.push(...getRandomFromList(HOT_TOP20.slice(0,10), Math.floor(hotCount * 0.7))); // 70% top10 hot
+        ticket.push(...getRandomFromList(HOT_TOP20.slice(0,10), Math.floor(hotCount * 0.7)));
         ticket.push(...getRandomFromList(HOT_TOP20, hotCount - ticket.length));
         ticket.push(...getRandomFromList(mediumPool, mediumCount, ticket));
-        if (coldCount) ticket.push(...getRandomFromList(stats.cold, coldCount, ticket)); // Gan 12-25
+        if (coldCount) ticket.push(...getRandomFromList(stats.cold, coldCount, ticket));
 
-        if (ticket.length < 6) continue; // Retry if not enough
+        if (ticket.length < 6) continue;
 
-        // Step 2: Integrate pairs
-        let minPairs = gemType === 'DIAMOND' ? 2 : gemType === 'GOLD' || gemType === 'SAPPHIRE' ? 1 : 0;
+        let minPairs = gemType === 'DIAMOND' ? 2 : (gemType === 'GOLD' || gemType === 'SAPPHIRE' ? 1 : 0);
         let pairAttempts = 0;
-        while (!hasPair(ticket, minPairs) && pairAttempts < 50) {
+        while (!hasPair(ticket, minPairs) && pairAttempts < 20) {
             pairAttempts++;
-            let pair = stats.pairs[Math.floor(Math.random() * (gemType === 'DIAMOND' ? 20 : 50))]; // Top20 for Diamond
+            let pairIdx = Math.floor(Math.random() * (gemType === 'DIAMOND' ? 20 : 50));
+            let pair = stats.pairs[pairIdx];
             if (!ticket.includes(pair[0]) && !ticket.includes(pair[1]) && !disabledNumbers.includes(pair[0]) && !disabledNumbers.includes(pair[1])) {
                 let replaceIdx1 = Math.floor(Math.random() * ticket.length);
                 let replaceIdx2 = Math.floor(Math.random() * ticket.length);
@@ -280,31 +302,31 @@ function generateTicket(gemType) {
             }
         }
 
-        // Step 3: Avoid recent
         let avoidChance = gemType === 'DIAMOND' ? 0.7 : 0.5;
         ticket = ticket.map(n => {
             if (stats.recent10.has(n) && Math.random() < avoidChance) {
-                let equivPool = HOT_TOP20.filter(m => m !== n && !ticket.includes(m) && !disabledNumbers.includes(m));
-                return equivPool.length > 0 ? equivPool[Math.floor(Math.random() * equivPool.length)] : n;
+                let equiv = HOT_TOP20.filter(m => m !== n && !ticket.includes(m) && !disabledNumbers.includes(m));
+                if (equiv.length > 0) return equiv[Math.floor(Math.random() * equiv.length)];
             }
             return n;
         });
 
-        // Step 4: Adjust filters
         if (gemType !== 'EMERALD') ticket = adjustForFilters(ticket, gemType);
 
-        // Step 5: Random tweak 30%
         if (Math.random() < 0.3) {
             let idx = Math.floor(Math.random() * ticket.length);
             let pool = Array.from({length: 55}, (_, i) => i + 1).filter(n => !disabledNumbers.includes(n) && !ticket.includes(n));
-            if (pool.length > 0) ticket[idx] = pool[Math.floor(Math.random() * pool.length)];
-            ticket = adjustForFilters(ticket, gemType); // Re-adjust
+            if (pool.length > 0) {
+                ticket[idx] = pool[Math.floor(Math.random() * pool.length)];
+                if (gemType !== 'EMERALD') ticket = adjustForFilters(ticket, gemType);
+            }
         }
 
-        // Score for best (pairs count + sum closeness to avg + even=3 bonus)
         let score = 0;
-        for (let pair of stats.pairs) if (ticket.includes(pair[0]) && ticket.includes(pair[1])) score += 1;
-        let sum = ticket.reduce((a,b) => a+b, 0);
+        for (let pair of stats.pairs) {
+            if (ticket.includes(pair[0]) && ticket.includes(pair[1])) score++;
+        }
+        sum = ticket.reduce((a,b) => a+b, 0);
         score -= Math.abs(sum - stats.sumAvg) / 10;
         let even = ticket.filter(n => n % 2 === 0).length;
         if (even === 3) score += 2;
@@ -318,7 +340,7 @@ function generateTicket(gemType) {
 }
 
 function generateBasicSafeTicket(gemType) {
-    if (gemType !== 'EMERALD') return null; // Only for Emerald
+    if (gemType !== 'EMERALD') return [1,2,3,4,5,6]; // Adjusted fallback for all
     let t = [];
     const safePool = Array.from({length: 55}, (_, i) => i + 1).filter(n => !disabledNumbers.includes(n));
     if(safePool.length < 6) return [1,2,3,4,5,6]; 
