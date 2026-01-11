@@ -225,29 +225,17 @@ body {
 }
 
 /* CHECKER SECTION */
+#checker-section {
+    background: #f9f9fb;
+    margin-top: 30px;
+    padding-top: 20px;
+}
+
 .checker-grid .num-cell { cursor: pointer; }
 .checker-grid .num-cell.selected {
     border: 3px solid #007aff !important;
     box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2), 0 4px 12px rgba(0, 122, 255, 0.3) !important;
     transform: scale(1.05);
-    position: relative;
-}
-.checker-grid .num-cell.selected::after {
-    content: '✓';
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    width: 20px;
-    height: 20px;
-    background: #007aff;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: bold;
-    box-shadow: 0 2px 6px rgba(0, 122, 255, 0.4);
 }
 
 .checker-info {
@@ -296,12 +284,79 @@ body {
 }
 .check-result-num {
     display: inline-block;
-    padding: 2px 8px;
-    background: #007aff;
-    color: white;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
+    padding: 4px 10px;
+    background: #ffffff;
+    color: #1c1c1e;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1px solid #d1d1d6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
-.check-result-num.hot { background: #d32f2f; }
-.check-result-num.cold { background: #1976d2; }
+.check-result-num.hot { 
+    background: #ffebee; 
+    color: #d32f2f; 
+    border-color: #ffcdd2; 
+}
+.check-result-num.cold { 
+    background: #e3f2fd; 
+    color: #1976d2; 
+    border-color: #bbdefb; 
+}
+.check-result-num.last-draw { 
+    background: #fff9c4; 
+    color: #d48806; 
+    border-color: #ffe082; 
+}
+.check-result-num.power { 
+    background: linear-gradient(135deg, #ffd700, #ffb300); 
+    color: white; 
+    border: none; 
+}
+
+/* Selected numbers display */
+.selected-numbers-display {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 12px 0;
+    padding: 12px;
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #e5e5ea;
+}
+.selected-num-ball {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    background: #ffffff;
+    color: #1c1c1e;
+    border: 1px solid #d1d1d6;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.selected-num-ball.is-hot { 
+    background: #ffebee; 
+    color: #d32f2f; 
+    border-color: #ffcdd2; 
+}
+.selected-num-ball.is-cold { 
+    background: #e3f2fd; 
+    color: #1976d2; 
+    border-color: #bbdefb; 
+}
+.selected-num-ball.is-last-draw { 
+    background: #fff9c4; 
+    color: #d48806; 
+    border-color: #ffe082; 
+}
+.selected-num-ball.is-power { 
+    background: linear-gradient(135deg, #ffd700, #ffb300); 
+    color: white; 
+    border: none; 
+}

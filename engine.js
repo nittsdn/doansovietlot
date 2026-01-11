@@ -541,22 +541,64 @@ function toggleSelectNumber(n) {
 function updateCheckerInfo() {
     const infoEl = document.getElementById('checker-info');
     const checkBtn = document.getElementById('check-btn');
+    const selectedContainer = document.getElementById('selected-numbers-container');
     
     if (selectedNumbers.length === 0) {
         infoEl.innerText = 'Chọn đủ 6 số để kiểm tra';
         infoEl.style.color = '#8e8e93';
+        selectedContainer.classList.add('hidden');
     } else if (selectedNumbers.length < 6) {
         infoEl.innerText = `Đã chọn ${selectedNumbers.length}/6 số. Chọn thêm ${6 - selectedNumbers.length} số nữa.`;
         infoEl.style.color = '#007aff';
+        renderSelectedNumbers();
     } else {
-        infoEl.innerText = `✓ Đã chọn đủ 6 số: ${selectedNumbers.sort((a,b)=>a-b).join(', ')}`;
+        infoEl.innerText = `✓ Đã chọn đủ 6 số`;
         infoEl.style.color = '#34c759';
+        renderSelectedNumbers();
     }
     
     // Enable/disable nút kiểm tra
     if (checkBtn) {
         checkBtn.disabled = (selectedNumbers.length !== 6);
     }
+}
+
+function renderSelectedNumbers() {
+    const container = document.getElementById('selected-numbers-container');
+    if (!container) return;
+    
+    if (selectedNumbers.length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+    
+    container.classList.remove('hidden');
+    container.innerHTML = '<div class="selected-numbers-display"></div>';
+    const display = container.querySelector('.selected-numbers-display');
+    
+    const latest = db.length > 0 ? db[0] : null;
+    const sorted = selectedNumbers.slice().sort((a,b)=>a-b);
+    
+    sorted.forEach(n => {
+        const ball = document.createElement('div');
+        ball.className = 'selected-num-ball';
+        ball.innerText = n;
+        
+        // Thêm class style giống map
+        if (latest) {
+            if (n === latest.pwr) {
+                ball.classList.add('is-power');
+            } else if (latest.nums.includes(n)) {
+                ball.classList.add('is-last-draw');
+            } else if (HOT_TOP20.includes(n)) {
+                ball.classList.add('is-hot');
+            } else if (COLD_BOTTOM20.includes(n)) {
+                ball.classList.add('is-cold');
+            }
+        }
+        
+        display.appendChild(ball);
+    });
 }
 
 function checkUserTicket() {
@@ -622,72 +664,70 @@ function displayCheckResult(result) {
     
     resultEl.classList.remove('hidden');
     
-    let html = '<div class="widget-header" style="margin-bottom: 12px;">📊 KẾT QUẢ KIỂM TRA</div>';
+    let html = '<div class="widget-header" style="margin-bottom: 15px;">📊 KẾT QUẢ KIỂM TRA</div>';
+    
+    html += `<div class="check-result-item">`;
+    html += `<div class="check-result-content" style="font-size: 14px; line-height: 1.8;">`;
+    html += `Trong <strong>${result.totalDraws} kỳ</strong> đã ra, bộ số của bạn có:<br><br>`;
     
     // Tổng
-    html += '<div class="check-result-item">';
-    html += '<div class="check-result-title">Tổng: ' + result.sum + '</div>';
-    html += '<div class="check-result-content">';
-    html += `Trong ${result.totalDraws} kỳ đã ra, có ${result.sumMatches} bộ số có tổng giống (${result.sumPercent}%)`;
-    html += '</div></div>';
+    html += `<strong>• Tổng: ${result.sum}</strong><br>`;
+    html += `&nbsp;&nbsp;Giống với <strong>${result.sumMatches} bộ số</strong> đã trúng, chiếm tỉ lệ <strong>${result.sumPercent}%</strong><br><br>`;
     
-    // Số nóng/lạnh
-    html += '<div class="check-result-item">';
-    html += '<div class="check-result-title">Phân loại số</div>';
-    html += '<div class="check-result-content">';
-    if (result.hotNums.length > 0) {
-        html += 'Số nóng: ';
-        html += '<div class="check-result-numbers">';
-        result.hotNums.forEach(n => {
-            html += `<span class="check-result-num hot">${n}</span>`;
-        });
-        html += '</div>';
+    // Phân loại số
+    if (result.hotNums.length > 0 || result.coldNums.length > 0) {
+        html += `<strong>• Phân loại số:</strong><br>`;
+        if (result.hotNums.length > 0) {
+            html += `&nbsp;&nbsp;Số nóng: `;
+            html += '<div class="check-result-numbers">';
+            result.hotNums.forEach(n => {
+                html += `<span class="check-result-num hot">${n}</span>`;
+            });
+            html += '</div>';
+        }
+        if (result.coldNums.length > 0) {
+            html += `&nbsp;&nbsp;Số lạnh: `;
+            html += '<div class="check-result-numbers">';
+            result.coldNums.forEach(n => {
+                html += `<span class="check-result-num cold">${n}</span>`;
+            });
+            html += '</div>';
+        }
+        html += '<br>';
     }
-    if (result.coldNums.length > 0) {
-        html += '<br>Số lạnh: ';
-        html += '<div class="check-result-numbers">';
-        result.coldNums.forEach(n => {
-            html += `<span class="check-result-num cold">${n}</span>`;
-        });
-        html += '</div>';
-    }
-    if (result.hotNums.length === 0 && result.coldNums.length === 0) {
-        html += 'Tất cả đều là số trung bình';
-    }
-    html += '</div></div>';
     
     // Trùng kỳ mới nhất
-    html += '<div class="check-result-item">';
-    html += '<div class="check-result-title">Trùng với kỳ mới nhất</div>';
-    html += '<div class="check-result-content">';
+    html += `<strong>• Số trùng kỳ đã ra:</strong><br>`;
     if (result.matchLatest.length > 0) {
-        html += `Trùng ${result.matchLatest.length} số với kỳ #${result.latestDraw.id}: `;
+        html += `&nbsp;&nbsp;Trùng <strong>${result.matchLatest.length} số</strong> với kỳ mới nhất (#${result.latestDraw.id}): `;
         html += '<div class="check-result-numbers">';
         result.matchLatest.forEach(n => {
-            html += `<span class="check-result-num">${n}</span>`;
+            const isLastDraw = result.latestDraw.nums.includes(n);
+            const isPower = (n === result.latestDraw.pwr);
+            let className = 'check-result-num';
+            if (isPower) className += ' power';
+            else if (isLastDraw) className += ' last-draw';
+            html += `<span class="${className}">${n}</span>`;
         });
         html += '</div>';
     } else {
-        html += 'Không trùng số nào với kỳ mới nhất';
+        html += `&nbsp;&nbsp;Không trùng số nào với kỳ mới nhất<br>`;
     }
-    html += '</div></div>';
     
     // Trùng lịch sử
-    html += '<div class="check-result-item">';
-    html += '<div class="check-result-title">Trùng với lịch sử</div>';
-    html += '<div class="check-result-content">';
     if (result.exactMatch) {
-        html += `⚠️ Bộ số này đã trúng tại kỳ #${result.exactMatch.id}`;
+        html += `&nbsp;&nbsp;<strong style="color: #d32f2f;">⚠️ Trùng chính xác 6 số</strong> với kỳ #${result.exactMatch.id}<br>`;
     } else if (result.maxMatch.count > 0) {
-        html += `Trùng tối đa ${result.maxMatch.count} số với kỳ #${result.maxMatch.drawId}: `;
+        html += `&nbsp;&nbsp;Trùng tối đa <strong>${result.maxMatch.count} số</strong> với kỳ #${result.maxMatch.drawId}: `;
         html += '<div class="check-result-numbers">';
         result.maxMatch.nums.forEach(n => {
             html += `<span class="check-result-num">${n}</span>`;
         });
         html += '</div>';
     } else {
-        html += 'Không trùng với bất kỳ kỳ nào trong lịch sử';
+        html += `&nbsp;&nbsp;Không trùng với bất kỳ kỳ nào trong lịch sử`;
     }
+    
     html += '</div></div>';
     
     resultEl.innerHTML = html;
