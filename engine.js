@@ -52,11 +52,22 @@ async function loadData() {
         analyzeData();
         renderHeaderInfo();
         renderMap();
+        renderCheckerMap();
         updateStatus(`Sẵn sàng (Kỳ #${db[0].id})`, false);
 
     } catch (e) {
         console.error(e);
-        updateStatus("Lỗi tải dữ liệu", false);
+        // Fallback data for testing
+        db = [
+            { id: "1290", nums: [3,12,22,41,43,48], pwr: 23, date: "10/01/2026", fullSet: [3,12,22,23,41,43,48] },
+            { id: "1289", nums: [8,11,20,34,40,51], pwr: 9, date: "09/01/2026", fullSet: [8,9,11,20,34,40,51] },
+            { id: "1288", nums: [1,9,23,31,44,53], pwr: 32, date: "08/01/2026", fullSet: [1,9,23,31,32,44,53] }
+        ];
+        analyzeData();
+        renderHeaderInfo();
+        renderMap();
+        renderCheckerMap();
+        updateStatus("Đang dùng dữ liệu mẫu", false);
     }
 }
 
@@ -475,4 +486,255 @@ function updateStatus(msg, isLoading) {
     if (el) el.innerText = msg;
 }
 
+// ============= TÍNH NĂNG KIỂM TRA BỘ SỐ =============
+let selectedNumbers = [];
+
+function renderCheckerMap() {
+    const grid = document.getElementById('checker-grid');
+    if (!grid || db.length === 0) return;
+    
+    grid.innerHTML = '';
+    const latest = db[0];
+    const lastNums = latest.nums;
+    const lastPower = latest.pwr;
+    
+    for (let i = 1; i <= 55; i++) {
+        const div = document.createElement('div');
+        div.className = 'num-cell';
+        div.innerText = i;
+        
+        // Thêm class trạng thái giống heat map
+        if (i === lastPower) {
+            div.classList.add('is-power-ball');
+            div.innerHTML += `<span class="power-icon">⚡</span>`;
+        }
+        else if (lastNums.includes(i)) div.classList.add('is-last-draw');
+        else if (HOT_TOP20.includes(i)) div.classList.add('is-hot');
+        else if (COLD_BOTTOM20.includes(i)) div.classList.add('is-cold');
+        
+        // Thêm class selected nếu đã chọn
+        if (selectedNumbers.includes(i)) {
+            div.classList.add('selected');
+        }
+        
+        div.onclick = () => toggleSelectNumber(i);
+        grid.appendChild(div);
+    }
+    
+    updateCheckerInfo();
+}
+
+function toggleSelectNumber(n) {
+    const idx = selectedNumbers.indexOf(n);
+    if (idx > -1) {
+        // Bỏ chọn
+        selectedNumbers.splice(idx, 1);
+    } else {
+        // Chọn mới (nếu chưa đủ 6)
+        if (selectedNumbers.length < 6) {
+            selectedNumbers.push(n);
+        }
+    }
+    renderCheckerMap();
+}
+
+function updateCheckerInfo() {
+    const infoEl = document.getElementById('checker-info');
+    const checkBtn = document.getElementById('check-btn');
+    const selectedContainer = document.getElementById('selected-numbers-container');
+    
+    if (selectedNumbers.length === 0) {
+        infoEl.innerText = 'Chọn đủ 6 số để kiểm tra';
+        infoEl.style.color = '#8e8e93';
+        selectedContainer.classList.add('hidden');
+    } else if (selectedNumbers.length < 6) {
+        infoEl.innerText = `Đã chọn ${selectedNumbers.length}/6 số. Chọn thêm ${6 - selectedNumbers.length} số nữa.`;
+        infoEl.style.color = '#007aff';
+        renderSelectedNumbers();
+    } else {
+        infoEl.innerText = `✓ Đã chọn đủ 6 số`;
+        infoEl.style.color = '#34c759';
+        renderSelectedNumbers();
+    }
+    
+    // Enable/disable nút kiểm tra
+    if (checkBtn) {
+        checkBtn.disabled = (selectedNumbers.length !== 6);
+    }
+}
+
+function renderSelectedNumbers() {
+    const container = document.getElementById('selected-numbers-container');
+    if (!container) return;
+    
+    if (selectedNumbers.length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+    
+    container.classList.remove('hidden');
+    container.innerHTML = '<div class="selected-numbers-display"></div>';
+    const display = container.querySelector('.selected-numbers-display');
+    
+    const latest = db.length > 0 ? db[0] : null;
+    const sorted = selectedNumbers.slice().sort((a,b)=>a-b);
+    
+    sorted.forEach(n => {
+        const ball = document.createElement('div');
+        ball.className = 'selected-num-ball';
+        ball.innerText = n;
+        
+        // Thêm class style giống map
+        if (latest) {
+            if (n === latest.pwr) {
+                ball.classList.add('is-power');
+            } else if (latest.nums.includes(n)) {
+                ball.classList.add('is-last-draw');
+            } else if (HOT_TOP20.includes(n)) {
+                ball.classList.add('is-hot');
+            } else if (COLD_BOTTOM20.includes(n)) {
+                ball.classList.add('is-cold');
+            }
+        }
+        
+        display.appendChild(ball);
+    });
+}
+
+function checkUserTicket() {
+    if (selectedNumbers.length !== 6 || db.length === 0) return;
+    
+    const ticket = selectedNumbers.sort((a,b)=>a-b);
+    const ticketStr = ticket.join(',');
+    const totalDraws = db.length;
+    
+    // Tính tổng
+    const sum = ticket.reduce((a,b)=>a+b, 0);
+    
+    // Đếm số bộ có tổng giống
+    let sumMatches = 0;
+    db.forEach(d => {
+        const drawSum = d.nums.reduce((a,b)=>a+b, 0);
+        if (drawSum === sum) sumMatches++;
+    });
+    const sumPercent = ((sumMatches / totalDraws) * 100).toFixed(2);
+    
+    // Phân loại số nóng/lạnh
+    const hotNums = ticket.filter(n => HOT_TOP20.includes(n));
+    const coldNums = ticket.filter(n => COLD_BOTTOM20.includes(n));
+    
+    // Tìm trùng với kỳ mới nhất
+    const latest = db[0];
+    const matchLatest = ticket.filter(n => latest.fullSet.includes(n));
+    
+    // Tìm trùng với lịch sử
+    let maxMatch = { count: 0, drawId: '', nums: [] };
+    db.forEach(d => {
+        const matchCount = ticket.filter(n => d.nums.includes(n)).length;
+        if (matchCount > maxMatch.count && matchCount > 0) {
+            maxMatch = {
+                count: matchCount,
+                drawId: d.id,
+                nums: ticket.filter(n => d.nums.includes(n))
+            };
+        }
+    });
+    
+    // Tìm trùng chính xác (6 số)
+    const exactMatch = db.find(d => d.nums.join(',') === ticketStr);
+    
+    // Hiển thị kết quả
+    displayCheckResult({
+        totalDraws,
+        sum,
+        sumMatches,
+        sumPercent,
+        hotNums,
+        coldNums,
+        matchLatest,
+        latestDraw: latest,
+        maxMatch,
+        exactMatch
+    });
+}
+
+function displayCheckResult(result) {
+    const resultEl = document.getElementById('checker-result');
+    if (!resultEl) return;
+    
+    resultEl.classList.remove('hidden');
+    
+    let html = '<div class="widget-header" style="margin-bottom: 15px;">📊 KẾT QUẢ KIỂM TRA</div>';
+    
+    html += `<div class="check-result-item">`;
+    html += `<div class="check-result-content" style="font-size: 14px; line-height: 1.8;">`;
+    html += `Trong <span class="stat-value">${result.totalDraws} kỳ</span> đã ra, bộ số của bạn có:<br><br>`;
+    
+    // Tổng 6 số
+    html += `<strong>• Tổng 6 số: <span class="stat-value">${result.sum}</span></strong><br>`;
+    html += `&nbsp;&nbsp;Giống với <span class="stat-value">${result.sumMatches} bộ số</span> đã trúng, chiếm tỉ lệ <span class="stat-value">${result.sumPercent}%</span><br><br>`;
+    
+    // Phân loại số
+    if (result.hotNums.length > 0 || result.coldNums.length > 0) {
+        html += `<strong>• Phân loại số:</strong><br>`;
+        if (result.hotNums.length > 0) {
+            html += `&nbsp;&nbsp;Số nóng:<br>`;
+            html += '<div class="check-result-numbers">';
+            result.hotNums.forEach(n => {
+                html += `<div class="check-result-num hot">${n}</div>`;
+            });
+            html += '</div>';
+        }
+        if (result.coldNums.length > 0) {
+            html += `&nbsp;&nbsp;Số lạnh:<br>`;
+            html += '<div class="check-result-numbers">';
+            result.coldNums.forEach(n => {
+                html += `<div class="check-result-num cold">${n}</div>`;
+            });
+            html += '</div>';
+        }
+        html += '<br>';
+    }
+    
+    // Trùng kỳ đã ra
+    html += `<strong>• Số trùng kỳ đã ra:</strong><br>`;
+    if (result.matchLatest.length > 0) {
+        html += `&nbsp;&nbsp;Trùng <span class="stat-value">${result.matchLatest.length} số</span> với kỳ mới nhất (#${result.latestDraw.id}):<br>`;
+        html += '<div class="check-result-numbers">';
+        result.matchLatest.forEach(n => {
+            const isLastDraw = result.latestDraw.nums.includes(n);
+            const isPower = (n === result.latestDraw.pwr);
+            let className = 'check-result-num';
+            if (isPower) className += ' power';
+            else if (isLastDraw) className += ' last-draw';
+            html += `<div class="${className}">${n}</div>`;
+        });
+        html += '</div>';
+    } else {
+        html += `&nbsp;&nbsp;Không trùng số nào với kỳ mới nhất<br>`;
+    }
+    
+    // Trùng lịch sử (bỏ cảnh báo nếu trùng chính xác)
+    if (result.exactMatch) {
+        html += `&nbsp;&nbsp;Trùng <span class="stat-value">6 số</span> với kỳ #${result.exactMatch.id}<br>`;
+    } else if (result.maxMatch.count > 0) {
+        html += `&nbsp;&nbsp;Trùng tối đa <span class="stat-value">${result.maxMatch.count} số</span> với kỳ #${result.maxMatch.drawId}:<br>`;
+        html += '<div class="check-result-numbers">';
+        result.maxMatch.nums.forEach(n => {
+            html += `<div class="check-result-num">${n}</div>`;
+        });
+        html += '</div>';
+    } else {
+        html += `&nbsp;&nbsp;Không trùng với bất kỳ kỳ nào trong lịch sử`;
+    }
+    
+    html += '</div></div>';
+    
+    resultEl.innerHTML = html;
+    
+    // Scroll to result
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Khởi tạo checker map khi load xong data
 document.addEventListener('DOMContentLoaded', loadData);
