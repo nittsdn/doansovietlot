@@ -21,7 +21,7 @@
 
     <main class="ios-container">
         <section class="ios-widget">
-            <div class="widget-header">BẢN ĐỒ NHIỆT (Bấm để Tắt/Mở số)</div>
+            <div class="widget-header generation-header">🎲 BẢN ĐỒ SINH SỐ</div>
             <div id="number-grid" class="grid-55"></div>
             <div class="map-explanation">
                 <div class="exp-item"><i class="dot default"></i> <span>Sẵn sàng</span></div>
@@ -31,11 +31,10 @@
                 <div class="exp-item"><i class="dot power"></i> <span>Power ⚡</span></div>
                 <div class="exp-item"><i class="dot disabled"></i> <span>Đã Tắt</span></div>
             </div>
+            <button onclick="generateFinalTickets()" class="ios-btn-action">
+                ✨ PHÂN TÍCH & SINH SỐ
+            </button>
         </section>
-
-        <button onclick="generateFinalTickets()" class="ios-btn-action">
-            ✨ PHÂN TÍCH & SINH SỐ
-        </button>
 
         <div id="results" class="hidden">
             <div class="widget-header" style="display:flex; justify-content:space-between; margin-top:15px;">
@@ -46,7 +45,7 @@
         </div>
 
         <section class="ios-widget" id="checker-section">
-            <div class="widget-header">KIỂM TRA BỘ SỐ CỦA BẠN</div>
+            <div class="widget-header checker-header">🔍 KIỂM TRA BỘ SỐ CỦA BẠN</div>
             <div id="checker-grid" class="grid-55 checker-grid"></div>
             <div class="checker-info" id="checker-info">Chọn đủ 6 số để kiểm tra</div>
             <div id="selected-numbers-container" class="hidden"></div>

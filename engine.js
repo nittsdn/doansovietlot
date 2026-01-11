@@ -668,38 +668,38 @@ function displayCheckResult(result) {
     
     html += `<div class="check-result-item">`;
     html += `<div class="check-result-content" style="font-size: 14px; line-height: 1.8;">`;
-    html += `Trong <strong>${result.totalDraws} kỳ</strong> đã ra, bộ số của bạn có:<br><br>`;
+    html += `Trong <span class="stat-value">${result.totalDraws} kỳ</span> đã ra, bộ số của bạn có:<br><br>`;
     
-    // Tổng
-    html += `<strong>• Tổng: ${result.sum}</strong><br>`;
-    html += `&nbsp;&nbsp;Giống với <strong>${result.sumMatches} bộ số</strong> đã trúng, chiếm tỉ lệ <strong>${result.sumPercent}%</strong><br><br>`;
+    // Tổng 6 số
+    html += `<strong>• Tổng 6 số: <span class="stat-value">${result.sum}</span></strong><br>`;
+    html += `&nbsp;&nbsp;Giống với <span class="stat-value">${result.sumMatches} bộ số</span> đã trúng, chiếm tỉ lệ <span class="stat-value">${result.sumPercent}%</span><br><br>`;
     
     // Phân loại số
     if (result.hotNums.length > 0 || result.coldNums.length > 0) {
         html += `<strong>• Phân loại số:</strong><br>`;
         if (result.hotNums.length > 0) {
-            html += `&nbsp;&nbsp;Số nóng: `;
+            html += `&nbsp;&nbsp;Số nóng:<br>`;
             html += '<div class="check-result-numbers">';
             result.hotNums.forEach(n => {
-                html += `<span class="check-result-num hot">${n}</span>`;
+                html += `<div class="check-result-num hot">${n}</div>`;
             });
             html += '</div>';
         }
         if (result.coldNums.length > 0) {
-            html += `&nbsp;&nbsp;Số lạnh: `;
+            html += `&nbsp;&nbsp;Số lạnh:<br>`;
             html += '<div class="check-result-numbers">';
             result.coldNums.forEach(n => {
-                html += `<span class="check-result-num cold">${n}</span>`;
+                html += `<div class="check-result-num cold">${n}</div>`;
             });
             html += '</div>';
         }
         html += '<br>';
     }
     
-    // Trùng kỳ mới nhất
+    // Trùng kỳ đã ra
     html += `<strong>• Số trùng kỳ đã ra:</strong><br>`;
     if (result.matchLatest.length > 0) {
-        html += `&nbsp;&nbsp;Trùng <strong>${result.matchLatest.length} số</strong> với kỳ mới nhất (#${result.latestDraw.id}): `;
+        html += `&nbsp;&nbsp;Trùng <span class="stat-value">${result.matchLatest.length} số</span> với kỳ mới nhất (#${result.latestDraw.id}):<br>`;
         html += '<div class="check-result-numbers">';
         result.matchLatest.forEach(n => {
             const isLastDraw = result.latestDraw.nums.includes(n);
@@ -707,21 +707,21 @@ function displayCheckResult(result) {
             let className = 'check-result-num';
             if (isPower) className += ' power';
             else if (isLastDraw) className += ' last-draw';
-            html += `<span class="${className}">${n}</span>`;
+            html += `<div class="${className}">${n}</div>`;
         });
         html += '</div>';
     } else {
         html += `&nbsp;&nbsp;Không trùng số nào với kỳ mới nhất<br>`;
     }
     
-    // Trùng lịch sử
+    // Trùng lịch sử (bỏ cảnh báo nếu trùng chính xác)
     if (result.exactMatch) {
-        html += `&nbsp;&nbsp;<strong style="color: #d32f2f;">⚠️ Trùng chính xác 6 số</strong> với kỳ #${result.exactMatch.id}<br>`;
+        html += `&nbsp;&nbsp;Trùng <span class="stat-value">6 số</span> với kỳ #${result.exactMatch.id}<br>`;
     } else if (result.maxMatch.count > 0) {
-        html += `&nbsp;&nbsp;Trùng tối đa <strong>${result.maxMatch.count} số</strong> với kỳ #${result.maxMatch.drawId}: `;
+        html += `&nbsp;&nbsp;Trùng tối đa <span class="stat-value">${result.maxMatch.count} số</span> với kỳ #${result.maxMatch.drawId}:<br>`;
         html += '<div class="check-result-numbers">';
         result.maxMatch.nums.forEach(n => {
-            html += `<span class="check-result-num">${n}</span>`;
+            html += `<div class="check-result-num">${n}</div>`;
         });
         html += '</div>';
     } else {
