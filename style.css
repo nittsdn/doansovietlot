@@ -247,7 +247,13 @@ body {
     border: 1px solid #e5e5ea;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-/* Style kết quả khớp với Map */
+/* Style cho tất cả các số Vietlot */
+.ball, .res-ball, .check-result-num, .selected-num-ball {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
 .res-ball.is-hot { background-color: #ffebee; color: #d32f2f; border-color: #ffcdd2; }
 .res-ball.is-cold { background-color: #e3f2fd; color: #1976d2; border-color: #bbdefb; }
 .res-ball.is-last-draw { background-color: #fff9c4; color: #f57f17; border-color: #fff59d; }
